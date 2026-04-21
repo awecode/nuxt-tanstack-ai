@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChatClientState, UIMessage } from '@tanstack/ai-client'
+import type { ChatClientState, MessagePart, UIMessage } from '@tanstack/ai-client'
 
 const props = withDefaults(
   defineProps<{
@@ -53,7 +53,7 @@ const lastAssistantHasVisibleSurface = computed(() => {
   const last = lastMessage.value
   if (!last || last.role !== 'assistant' || !last.parts?.length) return false
   return last.parts.some(
-    (p) =>
+    (p: MessagePart) =>
       (p.type === 'text' && typeof p.content === 'string' && p.content.trim().length > 0)
       || (p.type === 'thinking' && typeof p.content === 'string' && p.content.trim().length > 0)
       || p.type === 'image'
@@ -121,7 +121,7 @@ onMounted(() => {
     <div
       ref="scrollRoot"
       data-slot="chat-scroll"
-      :class="['flex flex-col gap-3 overflow-y-auto pr-1', maxHeightClass]"
+      :class="['flex flex-col gap-3 overflow-y-auto pb-6 pr-1', maxHeightClass]"
       @scroll.passive="onScroll"
     >
       <template
@@ -137,7 +137,7 @@ onMounted(() => {
 
       <div
         v-if="showPendingAssistant"
-        class="pt-2"
+        class="mt-8 pt-1"
         aria-live="polite"
         :aria-busy="'true'"
         :aria-label="`${assistantName} is responding`"

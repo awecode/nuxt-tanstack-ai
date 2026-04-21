@@ -52,6 +52,7 @@ function onActionClick() {
   <UCard
     variant="subtle"
     class="ring ring-default"
+    :ui="{ body: 'p-2 sm:p-2' }"
   >
     <UAlert
       v-if="error"

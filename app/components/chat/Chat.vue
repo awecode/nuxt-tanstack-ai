@@ -24,12 +24,15 @@ const props = withDefaults(
     userImage?: string
     /** When false, tool-call / tool-result parts are not shown in the transcript. */
     showToolUsage?: boolean
+    /** Pin the composer to the bottom of the chat column (parent should be flex + bounded height, e.g. `min-h-0 flex-1`). */
+    stickyPrompt?: boolean
   }>(),
   {
     endpoint: '/api/chat',
     assistantName: 'Assistant',
     userName: 'You',
-    showToolUsage: true
+    showToolUsage: true,
+    stickyPrompt: true
   }
 )
 
@@ -62,13 +65,20 @@ function onSubmit() {
 </script>
 
 <template>
-  <UContainer class="flex flex-1 flex-col gap-3 sm:gap-4">
+  <UContainer
+    :class="[
+      'flex flex-1 flex-col',
+      stickyPrompt ? 'min-h-0 h-full gap-0' : 'gap-3 sm:gap-4',
+    ]"
+  >
     <ChatMessageList
+      :class="stickyPrompt ? 'min-h-0 flex-1' : undefined"
       :messages="messages as ChatMessages"
       :status="status"
       :assistant-name="assistantName"
       :assistant-image="assistantImage"
       :show-tool-usage="showToolUsage"
+      :max-height-class="stickyPrompt ? 'min-h-0 flex-1' : undefined"
     >
       <template #default="{ message, messageIndex, totalMessages }">
         <ChatMessageBubble
@@ -91,14 +101,22 @@ function onSubmit() {
       </template>
     </ChatMessageList>
 
-    <ChatComposer
-      v-model="input"
-      autofocus
-      :status="status"
-      :error="error"
-      @submit="onSubmit"
-      @stop="stop"
-      @reload="reload"
-    />
+    <div
+      :class="
+        stickyPrompt
+          ? 'sticky bottom-0 z-10 shrink-0 border-t border-default/60 bg-default/95 pt-2 backdrop-blur-md supports-[backdrop-filter]:bg-default/80 pb-[max(0.5rem,env(safe-area-inset-bottom))]'
+          : undefined
+      "
+    >
+      <ChatComposer
+        v-model="input"
+        autofocus
+        :status="status"
+        :error="error"
+        @submit="onSubmit"
+        @stop="stop"
+        @reload="reload"
+      />
+    </div>
   </UContainer>
 </template>
