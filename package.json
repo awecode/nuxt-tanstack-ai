@@ -9,7 +9,8 @@
   },
   "main": "./nuxt.config.ts",
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepare": "cd ../ && pnpm dev:prepare"
   },
   "peerDependencies": {
     "@nuxt/ui": "^4.5.1"
