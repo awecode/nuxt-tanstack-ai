@@ -1,0 +1,98 @@
+diff --git a/dist/esm/adapters/text.js b/dist/esm/adapters/text.js
+index ff94322ce857f6ecb0cb1a0d4a4010bbe7330bd8..b75986bf2a208695b168a8a07075a3b99c35aeb3 100644
+--- a/dist/esm/adapters/text.js
++++ b/dist/esm/adapters/text.js
+@@ -149,6 +149,7 @@ class GeminiTextAdapter extends BaseTextAdapter {
+           if (functionCall) {
+             const toolCallId = functionCall.id || `${functionCall.name}_${Date.now()}_${nextToolIndex}`;
+             const functionArgs = functionCall.args || {};
++            const partThoughtSignature = part.thoughtSignature || functionCall.thoughtSignature || void 0;
+             let toolCallData = toolCallMap.get(toolCallId);
+             if (!toolCallData) {
+               toolCallData = {
+@@ -156,10 +157,13 @@ class GeminiTextAdapter extends BaseTextAdapter {
+                 args: typeof functionArgs === "string" ? functionArgs : JSON.stringify(functionArgs),
+                 index: nextToolIndex++,
+                 started: false,
+-                thoughtSignature: functionCall.thoughtSignature || void 0
++                thoughtSignature: partThoughtSignature
+               };
+               toolCallMap.set(toolCallId, toolCallData);
+             } else {
++              if (!toolCallData.thoughtSignature && partThoughtSignature) {
++                toolCallData.thoughtSignature = partThoughtSignature;
++              }
+               try {
+                 const existingArgs = JSON.parse(toolCallData.args);
+                 const newArgs = typeof functionArgs === "string" ? JSON.parse(functionArgs) : functionArgs;
+@@ -384,9 +388,9 @@ class GeminiTextAdapter extends BaseTextAdapter {
+             functionCall: {
+               id: toolCall.id,
+               name: toolCall.function.name,
+-              args: parsedArgs,
+-              ...thoughtSignature && { thoughtSignature }
+-            }
++              args: parsedArgs
++            },
++            ...thoughtSignature && { thoughtSignature }
+           });
+         }
+       }
+diff --git a/src/adapters/text.ts b/src/adapters/text.ts
+index 5dc441c98f69c9359ba352845fc1abddf0abfdd4..eb19cdb1774b197ce4c70a91d9a1cc17d79af930 100644
+--- a/src/adapters/text.ts
++++ b/src/adapters/text.ts
+@@ -289,6 +289,15 @@ export class GeminiTextAdapter<
+               `${functionCall.name}_${Date.now()}_${nextToolIndex}`
+             const functionArgs = functionCall.args || {}
+ 
++            // Gemini 3.x emits thoughtSignature as a Part-level sibling of
++            // functionCall (see @google/genai Part type), not nested inside
++            // functionCall. Read from the Part first, fall back to
++            // functionCall for older Gemini 2.x models.
++            const partThoughtSignature =
++              (part as any).thoughtSignature ||
++              (functionCall as any).thoughtSignature ||
++              undefined
++
+             let toolCallData = toolCallMap.get(toolCallId)
+             if (!toolCallData) {
+               toolCallData = {
+@@ -299,11 +308,13 @@ export class GeminiTextAdapter<
+                     : JSON.stringify(functionArgs),
+                 index: nextToolIndex++,
+                 started: false,
+-                thoughtSignature:
+-                  (functionCall as any).thoughtSignature || undefined,
++                thoughtSignature: partThoughtSignature,
+               }
+               toolCallMap.set(toolCallId, toolCallData)
+             } else {
++              if (!toolCallData.thoughtSignature && partThoughtSignature) {
++                toolCallData.thoughtSignature = partThoughtSignature
++              }
+               try {
+                 const existingArgs = JSON.parse(toolCallData.args)
+                 const newArgs =
+@@ -588,14 +599,18 @@ export class GeminiTextAdapter<
+ 
+           const thoughtSignature = toolCall.providerMetadata
+             ?.thoughtSignature as string | undefined
++          // Gemini 3.x requires thoughtSignature at the Part level (sibling
++          // of functionCall), not nested inside functionCall. Nesting it
++          // causes the API to reject the next turn with
++          // "Function call is missing a thought_signature".
+           parts.push({
+             functionCall: {
+               id: toolCall.id,
+               name: toolCall.function.name,
+               args: parsedArgs,
+-              ...(thoughtSignature && { thoughtSignature }),
+-            } as any,
+-          })
++            },
++            ...(thoughtSignature && { thoughtSignature }),
++          } as Part)
+         }
+       }
+ 

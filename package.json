@@ -17,8 +17,14 @@
   "dependencies": {
     "@comark/nuxt": "^0.2.1",
     "@tanstack/ai": "^0.11.0",
-    "@tanstack/ai-client": "^0.7.11",
-    "@tanstack/ai-gemini": "^0.8.9",
+    "@tanstack/ai-client": "0.7.10",
+    "@tanstack/ai-gemini": "0.8.8",
     "@tanstack/ai-vue": "^0.6.16"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@tanstack/ai-gemini@0.8.8": "patches/@tanstack__ai-gemini@0.8.8.patch",
+      "@tanstack/ai@0.10.3": "patches/@tanstack__ai@0.10.3.patch"
+    }
   }
 }

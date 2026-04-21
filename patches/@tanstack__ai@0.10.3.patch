@@ -1,0 +1,242 @@
+diff --git a/dist/esm/activities/chat/messages.js b/dist/esm/activities/chat/messages.js
+index 83f0c62b1a110b094ac0135435580a6ce6aaea0d..dbfd570fcef8e5e3dce1ddf88662298f3a02631f 100644
+--- a/dist/esm/activities/chat/messages.js
++++ b/dist/esm/activities/chat/messages.js
+@@ -87,7 +87,8 @@ function buildAssistantMessages(uiMessage) {
+             function: {
+               name: part.name,
+               arguments: part.arguments
+-            }
++            },
++            ...part.providerMetadata && { providerMetadata: part.providerMetadata }
+           });
+         }
+         break;
+@@ -166,8 +167,9 @@ function modelMessageToUIMessage(modelMessage, id) {
+         id: toolCall.id,
+         name: toolCall.function.name,
+         arguments: toolCall.function.arguments,
+-        state: "input-complete"
++        state: "input-complete",
+         // Model messages have complete arguments
++        ...toolCall.providerMetadata && { providerMetadata: toolCall.providerMetadata }
+       });
+     }
+   }
+diff --git a/dist/esm/activities/chat/stream/message-updaters.d.ts b/dist/esm/activities/chat/stream/message-updaters.d.ts
+index 8917f9431776480f7ebecffad3694bfe1ef195eb..a374cda69c1fddb8bd4df72655b73f2e6d5945dc 100644
+--- a/dist/esm/activities/chat/stream/message-updaters.d.ts
++++ b/dist/esm/activities/chat/stream/message-updaters.d.ts
+@@ -15,6 +15,7 @@ export declare function updateToolCallPart(messages: Array<UIMessage>, messageId
+     name: string;
+     arguments: string;
+     state: ToolCallState;
++    providerMetadata?: Record<string, unknown>;
+ }): Array<UIMessage>;
+ /**
+  * Update or add a tool result part to a message.
+diff --git a/dist/esm/activities/chat/stream/message-updaters.js b/dist/esm/activities/chat/stream/message-updaters.js
+index 535e88d124ae40e8346a58765d3b34cb4f74c42f..e575e88f581e8ed56189ac32ff005921d4f095d9 100644
+--- a/dist/esm/activities/chat/stream/message-updaters.js
++++ b/dist/esm/activities/chat/stream/message-updaters.js
+@@ -22,6 +22,7 @@ function updateToolCallPart(messages, messageId, toolCall) {
+     const existing = parts.find(
+       (p) => p.type === "tool-call" && p.id === toolCall.id
+     );
++    const providerMetadata = toolCall.providerMetadata ?? existing?.providerMetadata;
+     const toolCallPart = {
+       type: "tool-call",
+       id: toolCall.id,
+@@ -30,7 +31,8 @@ function updateToolCallPart(messages, messageId, toolCall) {
+       state: toolCall.state,
+       // Carry forward approval and output from the existing part
+       ...existing?.approval && { approval: { ...existing.approval } },
+-      ...existing?.output !== void 0 && { output: existing.output }
++      ...existing?.output !== void 0 && { output: existing.output },
++      ...providerMetadata && { providerMetadata }
+     };
+     if (existing) {
+       parts[parts.indexOf(existing)] = toolCallPart;
+diff --git a/dist/esm/activities/chat/stream/processor.js b/dist/esm/activities/chat/stream/processor.js
+index 5f37650ef98b4c51c2f6d0a960dc2a963dd3c808..1e0fb4f86094076586a659b791063fd66c535014 100644
+--- a/dist/esm/activities/chat/stream/processor.js
++++ b/dist/esm/activities/chat/stream/processor.js
+@@ -534,7 +534,8 @@ class StreamProcessor {
+         arguments: "",
+         state: initialState,
+         parsedArguments: void 0,
+-        index: chunk.index ?? state.toolCalls.size
++        index: chunk.index ?? state.toolCalls.size,
++        ...chunk.providerMetadata && { providerMetadata: chunk.providerMetadata }
+       };
+       state.toolCalls.set(toolCallId, newToolCall);
+       state.toolCallOrder.push(toolCallId);
+@@ -543,7 +544,8 @@ class StreamProcessor {
+         id: chunk.toolCallId,
+         name: chunk.toolName,
+         arguments: "",
+-        state: initialState
++        state: initialState,
++        ...chunk.providerMetadata && { providerMetadata: chunk.providerMetadata }
+       });
+       this.emitMessagesChange();
+       this.events.onToolCallStateChange?.(
+@@ -913,7 +915,8 @@ class StreamProcessor {
+             function: {
+               name: tc.name,
+               arguments: tc.arguments
+-            }
++            },
++            ...tc.providerMetadata && { providerMetadata: tc.providerMetadata }
+           });
+         }
+       }
+diff --git a/dist/esm/activities/chat/stream/types.d.ts b/dist/esm/activities/chat/stream/types.d.ts
+index 9eea86b92e20061a095034cddebf4de396fdf4ef..1307ee3a366ca6a8221704147221a297fa57c6f7 100644
+--- a/dist/esm/activities/chat/stream/types.d.ts
++++ b/dist/esm/activities/chat/stream/types.d.ts
+@@ -10,6 +10,8 @@ export interface InternalToolCallState {
+     state: ToolCallState;
+     parsedArguments?: any;
+     index: number;
++    /** Provider-specific metadata (e.g. Gemini thoughtSignature) */
++    providerMetadata?: Record<string, unknown>;
+ }
+ /**
+  * Strategy for determining when to emit text updates
+diff --git a/dist/esm/types.d.ts b/dist/esm/types.d.ts
+index 9967b558069f390c5d93219072a48e46645e088f..2a840847b681f80702a4aa2a2ec482ef889d4139 100644
+--- a/dist/esm/types.d.ts
++++ b/dist/esm/types.d.ts
+@@ -229,6 +229,8 @@ export interface ToolCallPart {
+     };
+     /** Tool execution output (for client tools or after approval) */
+     output?: any;
++    /** Provider-specific metadata carried through the tool call lifecycle (e.g. Gemini thoughtSignature) */
++    providerMetadata?: Record<string, unknown>;
+ }
+ export interface ToolResultPart {
+     type: 'tool-result';
+diff --git a/src/activities/chat/messages.ts b/src/activities/chat/messages.ts
+index b7f97b88072dc39bd080e7bc5178d4c023bc2923..67fa86d525526578d41967fc39160ad51dacf78d 100644
+--- a/src/activities/chat/messages.ts
++++ b/src/activities/chat/messages.ts
+@@ -138,6 +138,7 @@ interface AssistantSegment {
+     id: string
+     type: 'function'
+     function: { name: string; arguments: string }
++    providerMetadata?: Record<string, unknown>
+   }>
+ }
+ 
+@@ -205,6 +206,9 @@ function buildAssistantMessages(uiMessage: UIMessage): Array<ModelMessage> {
+               name: part.name,
+               arguments: part.arguments,
+             },
++            ...(part.providerMetadata && {
++              providerMetadata: part.providerMetadata,
++            }),
+           })
+         }
+         break
+@@ -340,6 +344,9 @@ export function modelMessageToUIMessage(
+         name: toolCall.function.name,
+         arguments: toolCall.function.arguments,
+         state: 'input-complete', // Model messages have complete arguments
++        ...(toolCall.providerMetadata && {
++          providerMetadata: toolCall.providerMetadata,
++        }),
+       })
+     }
+   }
+diff --git a/src/activities/chat/stream/message-updaters.ts b/src/activities/chat/stream/message-updaters.ts
+index 80b94d59aac3eeed909e97fa3b559986d8947315..6a18bdee2a694457225fc29859acf842c96f0bfe 100644
+--- a/src/activities/chat/stream/message-updaters.ts
++++ b/src/activities/chat/stream/message-updaters.ts
+@@ -55,6 +55,7 @@ export function updateToolCallPart(
+     name: string
+     arguments: string
+     state: ToolCallState
++    providerMetadata?: Record<string, unknown>
+   },
+ ): Array<UIMessage> {
+   return messages.map((msg) => {
+@@ -67,6 +68,10 @@ export function updateToolCallPart(
+       (p): p is ToolCallPart => p.type === 'tool-call' && p.id === toolCall.id,
+     )
+ 
++    // Carry forward providerMetadata from either the new toolCall or the existing part
++    const providerMetadata =
++      toolCall.providerMetadata ?? existing?.providerMetadata
++
+     const toolCallPart: ToolCallPart = {
+       type: 'tool-call',
+       id: toolCall.id,
+@@ -76,6 +81,7 @@ export function updateToolCallPart(
+       // Carry forward approval and output from the existing part
+       ...(existing?.approval && { approval: { ...existing.approval } }),
+       ...(existing?.output !== undefined && { output: existing.output }),
++      ...(providerMetadata && { providerMetadata }),
+     }
+ 
+     if (existing) {
+diff --git a/src/activities/chat/stream/processor.ts b/src/activities/chat/stream/processor.ts
+index caed6a74d15c6cc00ab57a49a3761bd98567733f..e3f3c3578d3be81ce3729ac7e657b2a21f74e529 100644
+--- a/src/activities/chat/stream/processor.ts
++++ b/src/activities/chat/stream/processor.ts
+@@ -856,6 +856,9 @@ export class StreamProcessor {
+         state: initialState,
+         parsedArguments: undefined,
+         index: chunk.index ?? state.toolCalls.size,
++        ...(chunk.providerMetadata && {
++          providerMetadata: chunk.providerMetadata,
++        }),
+       }
+ 
+       state.toolCalls.set(toolCallId, newToolCall)
+@@ -870,6 +873,9 @@ export class StreamProcessor {
+         name: chunk.toolName,
+         arguments: '',
+         state: initialState,
++        ...(chunk.providerMetadata && {
++          providerMetadata: chunk.providerMetadata,
++        }),
+       })
+       this.emitMessagesChange()
+ 
+@@ -1374,6 +1380,9 @@ export class StreamProcessor {
+               name: tc.name,
+               arguments: tc.arguments,
+             },
++            ...(tc.providerMetadata && {
++              providerMetadata: tc.providerMetadata,
++            }),
+           })
+         }
+       }
+diff --git a/src/activities/chat/stream/types.ts b/src/activities/chat/stream/types.ts
+index c1806238f79b6746625735af40057fbf59890c79..37457250530fc4837186bbdf958821442812cae8 100644
+--- a/src/activities/chat/stream/types.ts
++++ b/src/activities/chat/stream/types.ts
+@@ -25,6 +25,8 @@ export interface InternalToolCallState {
+   state: ToolCallState
+   parsedArguments?: any
+   index: number
++  /** Provider-specific metadata (e.g. Gemini thoughtSignature) */
++  providerMetadata?: Record<string, unknown>
+ }
+ 
+ /**
+diff --git a/src/types.ts b/src/types.ts
+index 984e15125ef4a19785ec8d0fa185d3f1efc353e4..5a4ef502b8a46a8a25fa6136c8ea4832a033a9e3 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -295,6 +295,8 @@ export interface ToolCallPart {
+   }
+   /** Tool execution output (for client tools or after approval) */
+   output?: any
++  /** Provider-specific metadata carried through the tool call lifecycle (e.g. Gemini thoughtSignature) */
++  providerMetadata?: Record<string, unknown>
+ }
+ 
+ export interface ToolResultPart {
