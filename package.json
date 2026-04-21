@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@comark/nuxt": "^0.2.1",
-    "@tanstack/ai": "^0.11.0",
+    "@tanstack/ai": "^0.10.3",
     "@tanstack/ai-client": "^0.7.11",
-    "@tanstack/ai-gemini": "^0.8.9",
+    "@tanstack/ai-gemini": "0.8.8",
     "@tanstack/ai-vue": "^0.6.16",
     "markdown-it": "^14.1.1",
     "shiki": "^4.0.2",

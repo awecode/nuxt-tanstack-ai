@@ -4,8 +4,13 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
-overrides:
-  unimport: ~5.6.0
+patchedDependencies:
+  '@tanstack/ai-gemini@0.8.8':
+    hash: db2d8eda43e3c69d4beddf99acf454bda4edb854e247e9f48eebb46ddf971c13
+    path: patches/@tanstack__ai-gemini@0.8.8.patch
+  '@tanstack/ai@0.10.3':
+    hash: a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140
+    path: patches/@tanstack__ai@0.10.3.patch
 
 importers:
 
@@ -15,17 +20,17 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1(markdown-it@14.1.1)(shiki@4.0.2)
       '@tanstack/ai':
-        specifier: ^0.11.0
-        version: 0.11.0
+        specifier: ^0.10.3
+        version: 0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140)
       '@tanstack/ai-client':
         specifier: ^0.7.11
         version: 0.7.11
       '@tanstack/ai-gemini':
-        specifier: ^0.8.9
-        version: 0.8.9(@tanstack/ai@0.11.0)
+        specifier: 0.8.8
+        version: 0.8.8(patch_hash=db2d8eda43e3c69d4beddf99acf454bda4edb854e247e9f48eebb46ddf971c13)(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))
       '@tanstack/ai-vue':
         specifier: ^0.6.16
-        version: 0.6.16(@tanstack/ai@0.11.0)
+        version: 0.6.16(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))
       markdown-it:
         specifier: ^14.1.1
         version: 14.1.1
@@ -160,21 +165,30 @@ packages:
   '@tanstack/ai-client@0.7.11':
     resolution: {integrity: sha512-PsIv9Yjze/Hl5tLWyv0W7ReLV+8PLdzEFuNmZCZPslhzle7kA0gL4yU3Gqi8N9uL3k4Mn6V4IG/Y0y75xrnGbg==}
 
+  '@tanstack/ai-event-client@0.2.3':
+    resolution: {integrity: sha512-LVZHPJAZKyZw0dMKBFDhf7ZpteZtRZv98oS6QYEy1hjuRaV3kXANR4S/yUL5otgAbGaaoCUTIuZ+DwLE6VW1wg==}
+    peerDependencies:
+      '@tanstack/ai': 0.10.3
+
   '@tanstack/ai-event-client@0.2.4':
     resolution: {integrity: sha512-b74oy6BxSIsqWc+xx4Xa4KKDd8xGvPeTpOkS9GEcT6+cse1mBiQBBajfqBsEFgWnXIMkKAtFx0xnmnRWQ6YHKQ==}
     peerDependencies:
       '@tanstack/ai': 0.11.0
 
-  '@tanstack/ai-gemini@0.8.9':
-    resolution: {integrity: sha512-e771K2T8GyXl5WUbF3x/e+9v2vBzAP83YQxWpnmQTMdg6PfYVAMmcYIDG5Xqla3jKbxZAQpv8mHuHh3ONG8s5w==}
+  '@tanstack/ai-gemini@0.8.8':
+    resolution: {integrity: sha512-XO84efwAhv4puLgDh8CnSlPXQCsg9WfTKRreKh9LhTNrfAS/tMJ8ERkhTveLg4QaPG5nVt+8ac9XQ/gjtPCWQg==}
     peerDependencies:
-      '@tanstack/ai': ^0.11.0
+      '@tanstack/ai': ^0.10.3
 
   '@tanstack/ai-vue@0.6.16':
     resolution: {integrity: sha512-jhLbVYkNVuTkJdrUaS+DaokNVHYJ6968c8h94F9RA+LkgO6kPul4SYIZZxBPjG8SXSmbm/OmbSBmBT135rAxDg==}
     peerDependencies:
       '@tanstack/ai': ^0.11.0
       vue: '>=3.5.0'
+
+  '@tanstack/ai@0.10.3':
+    resolution: {integrity: sha512-vYyDc2j6dYgxOJT2p6UpIlaQZYZBtv9nwqEHb9uclLYLDqocdWZrSu+g6z+6aZcNsnmolFFNrdB0Nvyj/hCYFA==}
+    engines: {node: '>=18'}
 
   '@tanstack/ai@0.11.0':
     resolution: {integrity: sha512-ppSHM8ANk6E4LaesQ40SuLkd5CtIDKd9LhkKpwNvAO19arrpukUKr5IIo13c8IGNLZWfmHbQ1w22vVAvHOI+ag==}
@@ -808,25 +822,35 @@ snapshots:
       '@tanstack/ai': 0.11.0
       '@tanstack/ai-event-client': 0.2.4(@tanstack/ai@0.11.0)
 
+  '@tanstack/ai-event-client@0.2.3(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))':
+    dependencies:
+      '@tanstack/ai': 0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140)
+      '@tanstack/devtools-event-client': 0.4.3
+
   '@tanstack/ai-event-client@0.2.4(@tanstack/ai@0.11.0)':
     dependencies:
       '@tanstack/ai': 0.11.0
       '@tanstack/devtools-event-client': 0.4.3
 
-  '@tanstack/ai-gemini@0.8.9(@tanstack/ai@0.11.0)':
+  '@tanstack/ai-gemini@0.8.8(patch_hash=db2d8eda43e3c69d4beddf99acf454bda4edb854e247e9f48eebb46ddf971c13)(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))':
     dependencies:
       '@google/genai': 1.50.1
-      '@tanstack/ai': 0.11.0
+      '@tanstack/ai': 0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@tanstack/ai-vue@0.6.16(@tanstack/ai@0.11.0)':
+  '@tanstack/ai-vue@0.6.16(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))':
     dependencies:
-      '@tanstack/ai': 0.11.0
+      '@tanstack/ai': 0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140)
       '@tanstack/ai-client': 0.7.11
+
+  '@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140)':
+    dependencies:
+      '@tanstack/ai-event-client': 0.2.3(@tanstack/ai@0.10.3(patch_hash=a339801cfe1c5a2ba5e05070c49387e890e852c8efc3f9c1d1f37fcd3166f140))
+      partial-json: 0.1.7
 
   '@tanstack/ai@0.11.0':
     dependencies:
