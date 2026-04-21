@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import type { AnyClientTool, InferChatMessages } from '@tanstack/ai-client'
+import type { AnyClientTool, InferChatMessages, UIMessage } from '@tanstack/ai-client'
 import { clientTools, createChatClientOptions } from '@tanstack/ai-client'
+import { toValue } from 'vue'
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-vue'
+
+function assistantHasRenderableSurface(parts: UIMessage['parts']) {
+  for (const p of parts) {
+    if (p.type === 'text' && typeof p.content === 'string' && p.content.trim().length > 0) return true
+    if (p.type === 'thinking' && typeof p.content === 'string' && p.content.trim().length > 0) return true
+    if (p.type === 'image') return true
+  }
+  return false
+}
 
 const props = withDefaults(
   defineProps<{
@@ -34,6 +44,16 @@ const chatOptions = createChatClientOptions({
 type ChatMessages = InferChatMessages<typeof chatOptions>
 const { messages, sendMessage, status, error, stop, reload } = useChat(chatOptions)
 
+/** Show assistant label when the visible “thread” breaks (incl. prior bubble was tool-only collapsed). */
+function showAssistantNameAt(index: number) {
+  if (index === 0) return true
+  const list = toValue(messages) as ChatMessages
+  const prev = list[index - 1]
+  if (!prev || prev.role !== 'assistant') return true
+  if (props.showToolUsage) return false
+  return !assistantHasRenderableSurface(prev.parts)
+}
+
 function onSubmit() {
   if (!input.value.trim()) return
   void sendMessage(input.value)
@@ -56,7 +76,11 @@ function onSubmit() {
           :assistant-image="assistantImage"
           :user-name="userName"
           :user-image="userImage"
-          :show-assistant-name="messageIndex === 0 || messages[messageIndex - 1]?.role !== 'assistant'"
+          :show-assistant-name="showAssistantNameAt(messageIndex)"
+          :show-tool-usage="showToolUsage"
+          :chat-status="status"
+          :message-index="messageIndex"
+          :total-messages="totalMessages"
         >
           <ChatTanStackParts
             :message="message"

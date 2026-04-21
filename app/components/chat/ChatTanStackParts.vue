@@ -25,13 +25,6 @@ function isLivePart(partIndex: number) {
 function formatUnknown(part: MessagePart) {
   return JSON.stringify(part, null, 0).slice(0, 200)
 }
-
-/** First tool part index: single compact status row replaces all tool parts when hidden. */
-const firstToolPartIndex = computed(() =>
-  props.message.parts.findIndex(
-    (p) => p.type === 'tool-call' || p.type === 'tool-result'
-  )
-)
 </script>
 
 <template>
@@ -52,16 +45,10 @@ const firstToolPartIndex = computed(() =>
         />
       </ChatThinkingPanel>
 
-      <template v-else-if="part.type === 'tool-call' || part.type === 'tool-result'">
-        <ChatToolPanel
-          v-if="showToolUsage"
-          :part="part"
-        />
-        <ChatToolStatusLite
-          v-else-if="index === firstToolPartIndex"
-          :message="message"
-        />
-      </template>
+      <ChatToolPanel
+        v-else-if="showToolUsage && (part.type === 'tool-call' || part.type === 'tool-result')"
+        :part="part"
+      />
 
       <template v-else-if="part.type === 'text'">
         <Comark
@@ -78,6 +65,10 @@ const firstToolPartIndex = computed(() =>
           {{ part.content }}
         </p>
       </template>
+
+      <template
+        v-else-if="!showToolUsage && (part.type === 'tool-call' || part.type === 'tool-result')"
+      />
 
       <div
         v-else-if="part.type === 'image'"
