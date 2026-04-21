@@ -7,12 +7,15 @@ const props = withDefaults(
     status: ChatClientState
     assistantName?: string
     assistantImage?: string
+    /** When false, keep the bottom skeleton through `ready` until the last assistant has text (tool → text gap). */
+    showToolUsage?: boolean
     /** Tailwind max-height for the scroll viewport */
     maxHeightClass?: string
   }>(),
   {
     maxHeightClass: 'max-h-[min(70vh,32rem)]',
-    assistantName: 'Assistant'
+    assistantName: 'Assistant',
+    showToolUsage: true
   }
 )
 
@@ -45,23 +48,36 @@ function onJumpClick() {
 
 const lastMessage = computed(() => props.messages.at(-1))
 
-/** First assistant text token has arrived on the latest assistant message */
-const hasStreamedAssistantText = computed(() => {
+/** Latest assistant message has something the transcript bubble would show (not hidden tools). */
+const lastAssistantHasVisibleSurface = computed(() => {
   const last = lastMessage.value
   if (!last || last.role !== 'assistant' || !last.parts?.length) return false
   return last.parts.some(
-    (p) => p.type === 'text' && typeof p.content === 'string' && p.content.trim().length > 0
+    (p) =>
+      (p.type === 'text' && typeof p.content === 'string' && p.content.trim().length > 0)
+      || (p.type === 'thinking' && typeof p.content === 'string' && p.content.trim().length > 0)
+      || p.type === 'image'
   )
 })
 
 /**
- * Assistant row: avatar + skeleton while waiting or streaming, until the first
- * text part on the latest assistant message has content (then the bubble shows it).
+ * Bottom assistant row: avatar + skeleton until the latest assistant message shows
+ * real content in the transcript (text, thinking, or image). With tools hidden,
+ * `status` can sit on `ready` between tool end and the next chunk — keep this row
+ * so there is no empty gap or a second empty bubble above the skeleton.
  */
 const showPendingAssistant = computed(() => {
-  if (props.status !== 'submitted' && props.status !== 'streaming') return false
-  if (hasStreamedAssistantText.value) return false
-  return true
+  if (lastAssistantHasVisibleSurface.value) return false
+  if (props.status === 'submitted' || props.status === 'streaming') return true
+  if (
+    props.showToolUsage === false
+    && props.status === 'ready'
+  ) {
+    const last = lastMessage.value
+    if (last?.role !== 'assistant') return false
+    return (last.parts?.length ?? 0) > 0
+  }
+  return false
 })
 
 watch(

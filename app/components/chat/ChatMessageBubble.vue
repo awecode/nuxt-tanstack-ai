@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChatClientState, UIMessage } from '@tanstack/ai-client'
+import type { UIMessage } from '@tanstack/ai-client'
 
 const props = withDefaults(
   defineProps<{
@@ -9,18 +9,10 @@ const props = withDefaults(
     userName?: string
     userImage?: string
     showAssistantName?: boolean
-    /** When false, assistant rows with only hidden tool parts stay collapsed (no empty chrome). */
+    /** When false, hide tool-only assistant bubbles; waiting UI is the list skeleton only. */
     showToolUsage?: boolean
-    chatStatus?: ChatClientState
-    messageIndex?: number
-    totalMessages?: number
   }>(),
-  {
-    showToolUsage: true,
-    chatStatus: 'ready',
-    messageIndex: 0,
-    totalMessages: 0
-  }
+  { showToolUsage: true }
 )
 
 function hasAssistantVisibleSurface(parts: UIMessage['parts']): boolean {
@@ -46,24 +38,10 @@ const shouldShowName = computed(() => {
   return props.showAssistantName ?? true
 })
 
-const isLastMessage = computed(
-  () => props.totalMessages > 0 && props.messageIndex === props.totalMessages - 1
-)
-const assistantTurnInFlight = computed(
-  () => props.chatStatus === 'submitted' || props.chatStatus === 'streaming'
-)
-
 const shouldRenderBubble = computed(() => {
   if (isUser.value) return true
   if (props.showToolUsage) return true
-  if (hasAssistantVisibleSurface(props.message.parts)) return true
-  // Stay mounted on the active assistant message through tools → text (no flicker).
-  if (
-    isLastMessage.value
-    && assistantTurnInFlight.value
-    && props.message.parts.length > 0
-  ) return true
-  return false
+  return hasAssistantVisibleSurface(props.message.parts)
 })
 </script>
 

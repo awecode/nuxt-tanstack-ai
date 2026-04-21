@@ -68,6 +68,7 @@ function onSubmit() {
       :status="status"
       :assistant-name="assistantName"
       :assistant-image="assistantImage"
+      :show-tool-usage="showToolUsage"
     >
       <template #default="{ message, messageIndex, totalMessages }">
         <ChatMessageBubble
@@ -78,9 +79,6 @@ function onSubmit() {
           :user-image="userImage"
           :show-assistant-name="showAssistantNameAt(messageIndex)"
           :show-tool-usage="showToolUsage"
-          :chat-status="status"
-          :message-index="messageIndex"
-          :total-messages="totalMessages"
         >
           <ChatTanStackParts
             :message="message"
