@@ -12,11 +12,14 @@ const props = withDefaults(
     assistantImage?: string
     userName?: string
     userImage?: string
+    /** When false, tool-call / tool-result parts are not shown in the transcript. */
+    showToolUsage?: boolean
   }>(),
   {
     endpoint: '/api/chat',
     assistantName: 'Assistant',
-    userName: 'You'
+    userName: 'You',
+    showToolUsage: true
   }
 )
 
@@ -43,6 +46,8 @@ function onSubmit() {
     <ChatMessageList
       :messages="messages as ChatMessages"
       :status="status"
+      :assistant-name="assistantName"
+      :assistant-image="assistantImage"
     >
       <template #default="{ message, messageIndex, totalMessages }">
         <ChatMessageBubble
@@ -58,6 +63,7 @@ function onSubmit() {
             :status="status"
             :message-index="messageIndex"
             :total-messages="totalMessages"
+            :show-tool-usage="showToolUsage"
           />
         </ChatMessageBubble>
       </template>

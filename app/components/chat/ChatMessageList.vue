@@ -5,10 +5,15 @@ const props = withDefaults(
   defineProps<{
     messages: readonly UIMessage[] | UIMessage[]
     status: ChatClientState
+    assistantName?: string
+    assistantImage?: string
     /** Tailwind max-height for the scroll viewport */
     maxHeightClass?: string
   }>(),
-  { maxHeightClass: 'max-h-[min(70vh,32rem)]' }
+  {
+    maxHeightClass: 'max-h-[min(70vh,32rem)]',
+    assistantName: 'Assistant'
+  }
 )
 
 const scrollRoot = ref<HTMLElement | null>(null)
@@ -38,30 +43,25 @@ function onJumpClick() {
   scrollToBottom(true)
 }
 
-const showTypingIndicator = computed(() => {
-  if (props.status !== 'submitted') return false
-  const last = props.messages.at(-1)
-  return Boolean(
-    last?.role === 'assistant'
-    && (!last.parts || last.parts.length === 0)
+const lastMessage = computed(() => props.messages.at(-1))
+
+/** First assistant text token has arrived on the latest assistant message */
+const hasStreamedAssistantText = computed(() => {
+  const last = lastMessage.value
+  if (!last || last.role !== 'assistant' || !last.parts?.length) return false
+  return last.parts.some(
+    (p) => p.type === 'text' && typeof p.content === 'string' && p.content.trim().length > 0
   )
 })
 
-/** User is waiting on the model: request in flight or tokens arriving */
-const showResponseStatus = computed(
-  () => props.status === 'submitted' || props.status === 'streaming'
-)
-
-const responseStatusLabel = computed(() => {
-  if (props.status === 'submitted') return 'Waiting for response…'
-  if (props.status === 'streaming') return 'Generating response…'
-  return ''
-})
-
-const responseStatusIcon = computed(() => {
-  if (props.status === 'submitted') return 'i-lucide-loader-circle'
-  if (props.status === 'streaming') return 'i-lucide-pen-line'
-  return 'i-lucide-minus'
+/**
+ * Assistant row: avatar + skeleton while waiting or streaming, until the first
+ * text part on the latest assistant message has content (then the bubble shows it).
+ */
+const showPendingAssistant = computed(() => {
+  if (props.status !== 'submitted' && props.status !== 'streaming') return false
+  if (hasStreamedAssistantText.value) return false
+  return true
 })
 
 watch(
@@ -120,30 +120,47 @@ onMounted(() => {
       </template>
 
       <div
-        v-if="showResponseStatus || showTypingIndicator"
-        class="border-t border-default/60 pt-3 pl-2 sm:pl-10"
+        v-if="showPendingAssistant"
+        class="pt-2"
         aria-live="polite"
-        :aria-busy="showResponseStatus ? 'true' : undefined"
+        :aria-busy="'true'"
+        :aria-label="`${assistantName} is responding`"
       >
-        <div
-          v-if="showResponseStatus"
-          class="flex items-center gap-2 text-sm text-muted"
-        >
-          <UIcon
-            :name="responseStatusIcon"
-            class="size-4 shrink-0 text-muted"
-            :class="{ 'animate-spin': status === 'submitted' }"
-          />
-          <span class="font-medium text-highlighted">{{ responseStatusLabel }}</span>
-        </div>
-        <div
-          v-if="showTypingIndicator"
-          class="mt-2 flex items-center gap-1.5"
-          aria-label="Assistant is typing"
-        >
-          <span class="size-2 animate-pulse rounded-full bg-muted" />
-          <span class="size-2 animate-pulse rounded-full bg-muted [animation-delay:120ms]" />
-          <span class="size-2 animate-pulse rounded-full bg-muted [animation-delay:240ms]" />
+        <div class="flex w-full gap-1.5">
+          <div
+            class="relative mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+            aria-hidden="true"
+          >
+            <span
+              class="pointer-events-none absolute inset-0 rounded-full ring-2 ring-inset ring-primary/25 motion-safe:animate-pulse"
+            />
+            <UAvatar
+              v-if="assistantImage"
+              :src="assistantImage"
+              :alt="assistantName"
+              size="sm"
+              class="relative"
+            />
+            <UIcon
+              v-else
+              name="i-lucide-bot"
+              class="relative size-4 text-muted motion-safe:animate-pulse"
+            />
+          </div>
+          <div class="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
+            <span class="text-[11px] font-medium text-muted">{{ assistantName }}</span>
+            <div class="flex flex-col gap-2">
+              <div
+                class="h-2.5 max-w-md w-[88%] rounded-full bg-muted/45 motion-safe:animate-pulse"
+              />
+              <div
+                class="h-2.5 max-w-sm w-[62%] rounded-full bg-muted/35 motion-safe:animate-pulse motion-safe:[animation-delay:120ms]"
+              />
+              <div
+                class="h-2.5 max-w-xs w-[42%] rounded-full bg-muted/30 motion-safe:animate-pulse motion-safe:[animation-delay:240ms]"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

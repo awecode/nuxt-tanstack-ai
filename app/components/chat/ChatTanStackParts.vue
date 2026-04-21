@@ -2,12 +2,16 @@
 import type { ChatClientState, MessagePart, UIMessage } from '@tanstack/ai-client'
 import highlight from '@comark/nuxt/plugins/highlight'
 
-const props = defineProps<{
-  message: UIMessage
-  status: ChatClientState
-  messageIndex: number
-  totalMessages: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    message: UIMessage
+    status: ChatClientState
+    messageIndex: number
+    totalMessages: number
+    showToolUsage?: boolean
+  }>(),
+  { showToolUsage: true }
+)
 
 function isLivePart(partIndex: number) {
   return (
@@ -41,10 +45,12 @@ function formatUnknown(part: MessagePart) {
         />
       </ChatThinkingPanel>
 
-      <ChatToolPanel
-        v-else-if="part.type === 'tool-call' || part.type === 'tool-result'"
-        :part="part"
-      />
+      <template v-else-if="part.type === 'tool-call' || part.type === 'tool-result'">
+        <ChatToolPanel
+          v-if="showToolUsage"
+          :part="part"
+        />
+      </template>
 
       <template v-else-if="part.type === 'text'">
         <Comark
