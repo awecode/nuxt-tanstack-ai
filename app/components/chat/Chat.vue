@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import type { InferChatMessages } from '@tanstack/ai-client'
+import type { AnyClientTool, InferChatMessages } from '@tanstack/ai-client'
 import { clientTools, createChatClientOptions } from '@tanstack/ai-client'
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-vue'
-import { getGenderDef, getGender } from '~~/app/utils/tools/gender'
-
-type ClientTools = ReturnType<typeof clientTools>
 
 const props = withDefaults(
   defineProps<{
-    tools?: ClientTools
+    /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
+    tools?: readonly AnyClientTool[]
     endpoint?: string
     assistantName?: string
     assistantImage?: string
@@ -24,8 +22,7 @@ const props = withDefaults(
 
 const input = ref('')
 
-const getGenderTool = getGenderDef.client(getGender)
-const tools = props.tools ?? clientTools(getGenderTool)
+const tools = clientTools(...(props.tools ?? []))
 
 const chatOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
