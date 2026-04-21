@@ -4,13 +4,31 @@ import { clientTools, createChatClientOptions } from '@tanstack/ai-client'
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-vue'
 import { getGenderDef, getGender } from '~~/app/utils/tools/gender'
 
+type ClientTools = ReturnType<typeof clientTools>
+
+const props = withDefaults(
+  defineProps<{
+    tools?: ClientTools
+    endpoint?: string
+    assistantName?: string
+    assistantImage?: string
+    userName?: string
+    userImage?: string
+  }>(),
+  {
+    endpoint: '/api/chat',
+    assistantName: 'Assistant',
+    userName: 'You'
+  }
+)
+
 const input = ref('')
 
 const getGenderTool = getGenderDef.client(getGender)
-const tools = clientTools(getGenderTool)
+const tools = props.tools ?? clientTools(getGenderTool)
 
 const chatOptions = createChatClientOptions({
-  connection: fetchServerSentEvents('/api/tchat'),
+  connection: fetchServerSentEvents(props.endpoint),
   tools
 })
 type ChatMessages = InferChatMessages<typeof chatOptions>
@@ -30,7 +48,13 @@ function onSubmit() {
       :status="status"
     >
       <template #default="{ message, messageIndex, totalMessages }">
-        <ChatMessageBubble :message="message">
+        <ChatMessageBubble
+          :message="message"
+          :assistant-name="assistantName"
+          :assistant-image="assistantImage"
+          :user-name="userName"
+          :user-image="userImage"
+        >
           <ChatTanStackParts
             :message="message"
             :status="status"

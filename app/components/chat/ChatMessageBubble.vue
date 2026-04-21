@@ -3,9 +3,21 @@ import type { UIMessage } from '@tanstack/ai-client'
 
 const props = defineProps<{
   message: UIMessage
+  assistantName?: string
+  assistantImage?: string
+  userName?: string
+  userImage?: string
 }>()
 
 const isUser = computed(() => props.message.role === 'user')
+const participantName = computed(() =>
+  isUser.value
+    ? (props.userName ?? 'You')
+    : (props.assistantName ?? 'Assistant')
+)
+const participantImage = computed(() =>
+  isUser.value ? props.userImage : props.assistantImage
+)
 </script>
 
 <template>
@@ -20,7 +32,14 @@ const isUser = computed(() => props.message.role === 'user')
       class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
       aria-hidden="true"
     >
+      <UAvatar
+        v-if="participantImage"
+        :src="participantImage"
+        :alt="participantName"
+        size="md"
+      />
       <UIcon
+        v-else
         name="i-lucide-bot"
         class="size-4 text-muted"
       />
@@ -31,6 +50,9 @@ const isUser = computed(() => props.message.role === 'user')
       :variant="isUser ? 'subtle' : 'outline'"
     >
       <div class="px-3 py-2 sm:px-4 sm:py-3">
+        <p class="mb-1 text-xs font-medium text-muted">
+          {{ participantName }}
+        </p>
         <slot />
       </div>
     </UCard>
@@ -40,7 +62,14 @@ const isUser = computed(() => props.message.role === 'user')
       class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
       aria-hidden="true"
     >
+      <UAvatar
+        v-if="participantImage"
+        :src="participantImage"
+        :alt="participantName"
+        size="md"
+      />
       <UIcon
+        v-else
         name="i-lucide-user"
         class="size-4 text-muted"
       />
