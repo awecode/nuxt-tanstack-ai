@@ -1,0 +1,21 @@
+{
+  "name": "nuxt-tanstack-ai",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "homepage": "https://github.com/awecode/nuxt-tanstack-ai#readme",
+  "imports": {
+    "#layers/tanstack-ai/*": "./*"
+  },
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.5.1"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
