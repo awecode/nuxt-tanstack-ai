@@ -7,6 +7,7 @@ const props = defineProps<{
   assistantImage?: string
   userName?: string
   userImage?: string
+  showAssistantName?: boolean
 }>()
 
 const isUser = computed(() => props.message.role === 'user')
@@ -18,61 +19,39 @@ const participantName = computed(() =>
 const participantImage = computed(() =>
   isUser.value ? props.userImage : props.assistantImage
 )
+const shouldShowName = computed(() => {
+  if (isUser.value) return true
+  return props.showAssistantName ?? true
+})
 </script>
 
 <template>
-  <div
-    class="flex w-full gap-2"
-    :class="isUser ? 'justify-end' : 'justify-start'"
-    :data-message-id="message.id"
-    :data-role="message.role"
-  >
-    <div
-      v-if="!isUser"
-      class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
-      aria-hidden="true"
-    >
-      <UAvatar
-        v-if="participantImage"
-        :src="participantImage"
-        :alt="participantName"
-        size="md"
-      />
-      <UIcon
-        v-else
-        name="i-lucide-bot"
-        class="size-4 text-muted"
-      />
+  <div class="flex w-full gap-1.5" :class="isUser ? 'justify-end' : 'justify-start'" :data-message-id="message.id"
+    :data-role="message.role">
+    <div v-if="!isUser"
+      class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+      aria-hidden="true">
+      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="md" />
+      <UIcon v-else name="i-lucide-bot" class="size-4 text-muted" />
     </div>
 
-    <UCard
-      class="max-w-[min(100%,40rem)] shrink"
-      :variant="isUser ? 'subtle' : 'outline'"
-    >
-      <div class="px-3 py-2 sm:px-4 sm:py-3">
-        <p class="mb-1 text-xs font-medium text-muted">
+    <UCard class="max-w-[min(100%,36rem)] shrink" :variant="isUser ? 'subtle' : 'soft'"
+      :class="!isUser ? 'border-0 bg-transparent shadow-none' : ''" :ui="{
+        body: 'p-0!',
+      }">
+      <div class="px-2.5 py-2 sm:px-3 sm:py-2.5">
+        <p v-if="shouldShowName" class="mb-0.5 text-[11px] font-medium text-muted">
           {{ participantName }}
         </p>
         <slot />
       </div>
     </UCard>
 
-    <div
-      v-if="isUser"
-      class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
-      aria-hidden="true"
-    >
-      <UAvatar
-        v-if="participantImage"
-        :src="participantImage"
-        :alt="participantName"
-        size="md"
-      />
-      <UIcon
-        v-else
-        name="i-lucide-user"
-        class="size-4 text-muted"
-      />
+    <div v-if="isUser"
+      class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+      aria-hidden="true">
+      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="md" />
+      <UIcon v-else name="i-lucide-user" class="size-4 text-muted" />
     </div>
   </div>
 </template>

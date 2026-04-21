@@ -42,7 +42,7 @@ function onSubmit() {
 </script>
 
 <template>
-  <UContainer class="flex flex-1 flex-col gap-4 sm:gap-6">
+  <UContainer class="flex flex-1 flex-col gap-3 sm:gap-4">
     <ChatMessageList
       :messages="messages as ChatMessages"
       :status="status"
@@ -54,6 +54,7 @@ function onSubmit() {
           :assistant-image="assistantImage"
           :user-name="userName"
           :user-image="userImage"
+          :show-assistant-name="messageIndex === 0 || messages[messageIndex - 1]?.role !== 'assistant'"
         >
           <ChatTanStackParts
             :message="message"
