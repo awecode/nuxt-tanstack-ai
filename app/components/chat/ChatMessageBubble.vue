@@ -48,15 +48,15 @@ const shouldRenderBubble = computed(() => {
 <template>
   <div
     v-if="shouldRenderBubble"
-    class="flex w-full gap-1.5"
+    class="flex w-full gap-2"
     :class="isUser ? 'justify-end' : 'justify-start'"
     :data-message-id="message.id"
     :data-role="message.role"
   >
     <div v-if="!isUser"
-      class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+      class="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-elevated ring ring-default"
       aria-hidden="true">
-      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="md" />
+      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="sm" />
       <UIcon v-else name="i-lucide-bot" class="size-4 text-muted" />
     </div>
 
@@ -73,9 +73,9 @@ const shouldRenderBubble = computed(() => {
     </UCard>
 
     <div v-if="isUser"
-      class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+      class="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-elevated ring ring-default"
       aria-hidden="true">
-      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="md" />
+      <UAvatar v-if="participantImage" :src="participantImage" :alt="participantName" size="sm" />
       <UIcon v-else name="i-lucide-user" class="size-4 text-muted" />
     </div>
   </div>

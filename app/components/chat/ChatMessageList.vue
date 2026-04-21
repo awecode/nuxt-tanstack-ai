@@ -13,7 +13,7 @@ const props = withDefaults(
     maxHeightClass?: string
   }>(),
   {
-    maxHeightClass: 'max-h-[min(70vh,32rem)]',
+    maxHeightClass: 'max-h-none',
     assistantName: 'Assistant',
     showToolUsage: true
   }
