@@ -1,33 +1,21 @@
-# Chat UI (`Chat` + Nitro API)
+# Tanstack AI + Nuxt UI
 
-This playground ships a small chat stack built on **@tanstack/ai**, **@tanstack/ai-vue**, **@tanstack/ai-client**, and **@nuxt/ui** v4. The root component is **`Chat`**, which wires `useChat`, `fetchServerSentEvents`, and the transcript UI.
+This layer ships a small chat stack built on **@tanstack/ai**, and **@nuxt/ui**. The root component is **`Chat`**, which wires `useChat`, `fetchServerSentEvents`, and the transcript UI.
 
-## Prerequisites
+## Usage
 
-- **Nuxt** app with **@nuxt/ui** v4 (peer dependency in this package).
-- Dependencies (see `.playground/package.json`): `@tanstack/ai`, `@tanstack/ai-client`, `@tanstack/ai-vue`, and an adapter package such as `@tanstack/ai-gemini` if you stream from Gemini / Vertex.
-
-Components live under:
-
-`app/components/chat/`
-
-Nuxt auto-imports them as `Chat`, `ChatComposer`, `ChatMessageList`, etc.
-
-## Mounting `Chat`
-
-Use `Chat` anywhere you want a full thread + composer. Default SSE endpoint is **`POST /api/chat`** (override with the `endpoint` prop).
+Use `Chat` anywhere you want a full AI chat interface.
 
 ```vue
 <template>
-  <div class="flex min-h-0 flex-1 flex-col">
     <Chat />
-  </div>
 </template>
 ```
 
-### Layout note (`stickyPrompt`)
+Default SSE endpoint is **`POST /api/chat`** (override with the `endpoint` prop). Full props example:
 
-When **`stickyPrompt`** is `true` (default), the composer is pinned with `sticky bottom-0` and the message list is meant to scroll inside the column. For that to work reliably, a parent should usually provide a **bounded height** and **`min-h-0`** on flex children (for example `min-h-0 flex-1` on a column that fills the viewport). If the page body is the only scroll container, behavior still works, but auto-scroll and the “Latest” chip depend on how the host layout scrolls.
+<give full props example here>
+
 
 ## `Chat` props
 
@@ -39,29 +27,18 @@ When **`stickyPrompt`** is `true` (default), the composer is pinned with `sticky
 | `assistantImage` | `string` | — | Optional avatar URL. |
 | `userName` | `string` | `'You'` | Shown on user bubbles. |
 | `userImage` | `string` | — | Optional avatar URL. |
-| `showToolUsage` | `boolean` | `true` | When `false`, tool-call / tool-result parts are collapsed in the transcript where the UI supports it. |
+| `showToolUsage` | `boolean` | `true` | When `false`, tool-call / tool-result parts are hidden. |
 | `stickyPrompt` | `boolean` | `true` | Sticky composer + flex-friendly list; set `false` for a simpler stacked layout. |
 
-`Chat` forwards **`max-height-class`** to `ChatMessageList` when `stickyPrompt` is true (typically `min-h-0 flex-1`). Override by forking `Chat.vue` or extending the prop surface if you need a fixed max height (for example `max-h-[min(70vh,32rem)]`).
-
-## Nitro API: `POST /api/chat`
+## Nitro API
 
 Create a route file at:
 
 **`server/api/chat.post.ts`**
 
-That exposes **`POST /api/chat`** to the client (matching the default `endpoint` on `Chat`).
+That exposes **`POST /api/chat`** to the client (matching the default `endpoint` on `Chat`). Or you can use a custom api path and pass it as `endpoint` prop to the `Chat` component.
 
-The handler should:
-
-1. Read **`messages`** and optional **`conversationId`** from the request body (same shape TanStack’s client sends).
-2. Call **`chat()`** from `@tanstack/ai` with your adapter and optional **`tools`** (server and/or client tool definitions, depending on your setup).
-3. Return **`toServerSentEventsResponse(stream)`** so `fetchServerSentEvents` on the client can consume the stream.
-4. Set SSE-friendly response headers.
-
-### Example (Gemini / Vertex + optional tools)
-
-Adapt model name, env vars, and imports to your project. Tool imports below are placeholders; replace with your own `toolDefinition` exports.
+Adapt adapter, model name, env vars, and imports to your project. Tool imports below are placeholders; replace with your own `toolDefinition` exports. Refer to [Tanstack AI documentation](https://tanstack.com/ai/latest/docs/getting-started/overview) to elarn more about adapters, tools, and advanced usage,
 
 ```ts
 import { chat, toServerSentEventsResponse } from '@tanstack/ai'
@@ -71,7 +48,6 @@ import { getGenderDef } from '~~/app/utils/tools/gender'
 
 export default defineEventHandler(async (event) => {
   const config = {
-    // baseURL: 'https://aiplatform.googleapis.com/v1',
     vertexai: true,
   }
   const apiKey = process.env.NUXT_AI_VERTEX_API_KEY
@@ -108,20 +84,10 @@ export default defineEventHandler(async (event) => {
   }
 })
 ```
-
-### Environment
-
-- Configure whatever secret your adapter needs (here **`NUXT_AI_VERTEX_API_KEY`**) in `.env` and expose it to Nitro via `runtimeConfig` or direct `process.env`, per your Nuxt setup.
-
 ### Client vs server tools
 
-- **Client tools**: definitions passed to `chat()` on the server can still drive tool calls that execute on the client when you pass matching **`tools`** into `Chat` from `toolDefinition(...).client(...)`.
-- **Server tools**: pass server-side implementations in `tools` on the server only, as in TanStack’s docs for your adapter version.
+- **Client tools**: Pass client tools to `Chat` component and have their tool definition registered in the server API endpoint as well.
+- **Server tools**: Pass server-side tools in chat API endpoint.
 
-## Related components
+See [https://tanstack.com/ai/latest/docs/tools/tools](https://tanstack.com/ai/latest/docs/tools/tools) to learn more about Tanstack AI tools.
 
-- **`ChatComposer`**: textarea, send / stop / retry; `v-model` for the draft string.
-- **`ChatMessageList`**: scroll region, pending assistant skeleton, “Latest” jump control.
-- **`ChatMessageBubble`** / **`ChatTanStackParts`**: rendering of message parts (text, thinking, tools, etc.).
-
-For behavior details, read the `<script setup>` blocks in those files; props are documented inline where it matters.
