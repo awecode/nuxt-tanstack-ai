@@ -12,23 +12,45 @@ Use `Chat` anywhere you want a full AI chat interface.
 </template>
 ```
 
-Default SSE endpoint is **`POST /api/chat`** (override with the `endpoint` prop). Full props example:
+Default SSE endpoint is **`POST /api/chat`** (override with the `endpoint` prop).
 
-<give full props example here>
+Full props example (all props shown; omit or simplify what you do not need):
 
+```vue
+<script setup lang="ts">
+import { getGenderDef } from '~~/app/utils/tools/gender'
+import { getGender } from '~~/app/utils/tools/gender'
+const getGenderClientTool = getGenderDef.client(getGender)
+</script>
+
+<template>
+  <div class="flex min-h-0 flex-1 flex-col">
+    <Chat
+      :tools="[getGenderClientTool]"
+      endpoint="/api/chat"
+      assistant-name="Assistant"
+      assistant-image="https://example.com/assistant.png"
+      :user-name="user.name"
+      :user-image="user.profile_picture"
+      :show-tool-usage="true"
+      :sticky-prompt="true"
+    />
+  </div>
+</template>
+```
 
 ## `Chat` props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)`, wrapped internally with `clientTools`. |
+| `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)` |
 | `endpoint` | `string` | `'/api/chat'` | URL passed to `fetchServerSentEvents` (your Nitro route). |
-| `assistantName` | `string` | `'Assistant'` | Shown on assistant bubbles / pending row. |
-| `assistantImage` | `string` | — | Optional avatar URL. |
+| `assistantName` | `string` | `'Assistant'` | Shown on assistant bubbles. |
+| `assistantImage` | `string` | — | Optional avatar URL for assistant. |
 | `userName` | `string` | `'You'` | Shown on user bubbles. |
-| `userImage` | `string` | — | Optional avatar URL. |
+| `userImage` | `string` | — | Optional avatar URL for user. |
 | `showToolUsage` | `boolean` | `true` | When `false`, tool-call / tool-result parts are hidden. |
-| `stickyPrompt` | `boolean` | `true` | Sticky composer + flex-friendly list; set `false` for a simpler stacked layout. |
+| `stickyPrompt` | `boolean` | `true` | Sticky prompt textarea/composer ; set `false` for a simpler stacked layout. |
 
 ## Nitro API
 
@@ -38,7 +60,7 @@ Create a route file at:
 
 That exposes **`POST /api/chat`** to the client (matching the default `endpoint` on `Chat`). Or you can use a custom api path and pass it as `endpoint` prop to the `Chat` component.
 
-Adapt adapter, model name, env vars, and imports to your project. Tool imports below are placeholders; replace with your own `toolDefinition` exports. Refer to [Tanstack AI documentation](https://tanstack.com/ai/latest/docs/getting-started/overview) to elarn more about adapters, tools, and advanced usage,
+Adapt adapter, model name, env vars, and imports to your project. Tool imports below are placeholders; replace with your own `toolDefinition` exports. Refer to [Tanstack AI documentation](https://tanstack.com/ai/latest/docs/getting-started/overview) to learn more about adapters, tools, and advanced usage.
 
 ```ts
 import { chat, toServerSentEventsResponse } from '@tanstack/ai'
