@@ -130,6 +130,7 @@ export default defineEventHandler(async (event) => {
       adapter,
       messages,
       conversationId,
+      systemPrompts: ["You are a helpful assistant"],
       tools: [getGenderDef], // for client tools
       // tools: [getGenderServer] // for server tools
     })
