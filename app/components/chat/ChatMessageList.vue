@@ -19,30 +19,26 @@ const props = withDefaults(
   }
 )
 
-const scrollRoot = ref<HTMLElement | null>(null)
+const contentWrap = ref<HTMLElement | null>(null)
+const bottomAnchor = ref<HTMLElement | null>(null)
+
 const showJump = ref(false)
-let userScrolledAway = false
-
-function nearBottom(el: HTMLElement, px: number) {
-  return el.scrollHeight - el.scrollTop - el.clientHeight < px
-}
-
-function onScroll() {
-  const el = scrollRoot.value
-  if (!el) return
-  showJump.value = !nearBottom(el, 140)
-  if (!nearBottom(el, 72)) userScrolledAway = true
-  else userScrolledAway = false
-}
+/** Updated by IntersectionObserver on `bottomAnchor`; works for inner OR window scrolling. */
+let atBottom = true
+let io: IntersectionObserver | null = null
+let ro: ResizeObserver | null = null
 
 function scrollToBottom(smooth: boolean) {
-  const el = scrollRoot.value
-  if (!el) return
-  el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
+  const anchor = bottomAnchor.value
+  if (!anchor) return
+  anchor.scrollIntoView({
+    block: 'end',
+    inline: 'nearest',
+    behavior: smooth ? 'smooth' : 'auto'
+  })
 }
 
 function onJumpClick() {
-  userScrolledAway = false
   scrollToBottom(true)
 }
 
@@ -81,103 +77,140 @@ const showPendingAssistant = computed(() => {
 })
 
 watch(
-  () => props.messages,
-  () => {
+  () => props.messages.length,
+  (len, prevLen) => {
+    if (len === prevLen) return
+    const last = props.messages.at(-1)
     nextTick(() => {
-      const el = scrollRoot.value
-      if (!el) return
-      const last = props.messages.at(-1)
+      // Newly-sent user message: always follow to bottom.
       if (last?.role === 'user') {
-        userScrolledAway = false
+        atBottom = true
         scrollToBottom(true)
         return
       }
-      if (props.status === 'streaming' && !userScrolledAway && nearBottom(el, 160)) {
-        scrollToBottom(false)
-      }
+      if (atBottom) scrollToBottom(false)
     })
-  },
-  { deep: true }
+  }
 )
 
 watch(
   () => props.status,
   (s) => {
     if (s === 'submitted') {
-      userScrolledAway = false
+      atBottom = true
       nextTick(() => scrollToBottom(true))
     }
   }
 )
 
 onMounted(() => {
+  const anchor = bottomAnchor.value
+  const content = contentWrap.value
+
+  // IntersectionObserver against the real viewport. Works for either
+  // inner-scrollport or window-scrollport layouts (it honors every ancestor's
+  // clipping). A small positive bottom rootMargin gives a ~32px "near bottom"
+  // tolerance so the chip doesn't flicker on tiny scroll jitter.
+  if (anchor) {
+    io = new IntersectionObserver(
+      ([entry]) => {
+        atBottom = entry.isIntersecting
+        showJump.value = !atBottom && props.messages.length > 0
+      },
+      { root: null, threshold: 0, rootMargin: '0px 0px 32px 0px' }
+    )
+    io.observe(anchor)
+  }
+
+  // Follow streaming content growth while pinned at bottom. Works for either
+  // inner-scrollport or window-scrollport layouts.
+  if (content) {
+    ro = new ResizeObserver(() => {
+      if (atBottom) scrollToBottom(false)
+    })
+    ro.observe(content)
+  }
+
   nextTick(() => scrollToBottom(false))
   setTimeout(() => scrollToBottom(false), 80)
+})
+
+onUnmounted(() => {
+  io?.disconnect()
+  io = null
+  ro?.disconnect()
+  ro = null
 })
 </script>
 
 <template>
   <div class="relative flex min-h-0 flex-1 flex-col">
     <div
-      ref="scrollRoot"
       data-slot="chat-scroll"
-      :class="['flex flex-col gap-3 overflow-y-auto pb-6 pr-1', maxHeightClass]"
-      @scroll.passive="onScroll"
+      :class="['min-h-0 overflow-y-auto pb-6 pr-1', maxHeightClass]"
     >
-      <template
-        v-for="(message, messageIndex) in messages"
-        :key="message.id"
-      >
-        <slot
-          :message="message"
-          :message-index="messageIndex"
-          :total-messages="messages.length"
-        />
-      </template>
+      <div ref="contentWrap" class="flex flex-col gap-3">
+        <template
+          v-for="(message, messageIndex) in messages"
+          :key="message.id"
+        >
+          <slot
+            :message="message"
+            :message-index="messageIndex"
+            :total-messages="messages.length"
+          />
+        </template>
 
-      <div
-        v-if="showPendingAssistant"
-        class="mt-8 pt-1"
-        aria-live="polite"
-        :aria-busy="'true'"
-        :aria-label="`${assistantName} is responding`"
-      >
-        <div class="flex w-full gap-1.5">
-          <div
-            class="relative mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
-            aria-hidden="true"
-          >
-            <span
-              class="pointer-events-none absolute inset-0 rounded-full ring-2 ring-inset ring-primary/25 motion-safe:animate-pulse"
-            />
-            <UAvatar
-              v-if="assistantImage"
-              :src="assistantImage"
-              :alt="assistantName"
-              size="sm"
-              class="relative"
-            />
-            <UIcon
-              v-else
-              name="i-lucide-bot"
-              class="relative size-4 text-muted motion-safe:animate-pulse"
-            />
-          </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
-            <span class="text-[11px] font-medium text-muted">{{ assistantName }}</span>
-            <div class="flex flex-col gap-2">
-              <div
-                class="h-2.5 max-w-md w-[88%] rounded-full bg-muted/45 motion-safe:animate-pulse"
+        <div
+          v-if="showPendingAssistant"
+          class="mt-8 pt-1"
+          aria-live="polite"
+          :aria-busy="'true'"
+          :aria-label="`${assistantName} is responding`"
+        >
+          <div class="flex w-full gap-1.5">
+            <div
+              class="relative mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-elevated ring ring-default"
+              aria-hidden="true"
+            >
+              <span
+                class="pointer-events-none absolute inset-0 rounded-full ring-2 ring-inset ring-primary/25 motion-safe:animate-pulse"
               />
-              <div
-                class="h-2.5 max-w-sm w-[62%] rounded-full bg-muted/35 motion-safe:animate-pulse motion-safe:[animation-delay:120ms]"
+              <UAvatar
+                v-if="assistantImage"
+                :src="assistantImage"
+                :alt="assistantName"
+                size="sm"
+                class="relative"
               />
-              <div
-                class="h-2.5 max-w-xs w-[42%] rounded-full bg-muted/30 motion-safe:animate-pulse motion-safe:[animation-delay:240ms]"
+              <UIcon
+                v-else
+                name="i-lucide-bot"
+                class="relative size-4 text-muted motion-safe:animate-pulse"
               />
+            </div>
+            <div class="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
+              <span class="text-[11px] font-medium text-muted">{{ assistantName }}</span>
+              <div class="flex flex-col gap-2">
+                <div
+                  class="h-2.5 max-w-md w-[88%] rounded-full bg-muted/45 motion-safe:animate-pulse"
+                />
+                <div
+                  class="h-2.5 max-w-sm w-[62%] rounded-full bg-muted/35 motion-safe:animate-pulse motion-safe:[animation-delay:120ms]"
+                />
+                <div
+                  class="h-2.5 max-w-xs w-[42%] rounded-full bg-muted/30 motion-safe:animate-pulse motion-safe:[animation-delay:240ms]"
+                />
+              </div>
             </div>
           </div>
         </div>
+
+        <div
+          ref="bottomAnchor"
+          class="h-px w-full shrink-0 scroll-mb-24"
+          aria-hidden="true"
+        />
       </div>
     </div>
 
@@ -191,7 +224,7 @@ onMounted(() => {
     >
       <div
         v-if="showJump"
-        class="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
+        class="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center"
       >
         <UButton
           class="pointer-events-auto shadow-md"
