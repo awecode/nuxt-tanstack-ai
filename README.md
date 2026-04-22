@@ -32,6 +32,7 @@ Full props example (all props shown; omit or simplify what you do not need):
 import { getGenderDef } from '~~/app/utils/tools/gender'
 import { getGender } from '~~/app/utils/tools/gender'
 const getGenderClientTool = getGenderDef.client(getGender)
+const chatRef = useTemplateRef('chatRef')
 </script>
 
 <template>
@@ -46,17 +47,23 @@ const getGenderClientTool = getGenderDef.client(getGender)
       :show-tool-usage="true"
       :sticky-prompt="true"
     >
-      <p class="text-muted text-sm">
-        Optional default slot: intro, disclaimer, anything; shown when no chat messages.
-      </p>
+      <div class="flex flex-col gap-3 text-center text-muted text-sm">
+        Pick a starter or type and send a message.
+        <div class="flex flex-wrap gap-2 justify-center">
+          <UButton
+            size="sm"
+            variant="soft"
+            color="neutral"
+            @click="chatRef!.sendMessage('Tell me a joke')"
+          >
+            Tell me a joke
+          </UButton>
+        </div>
+      </div>
     </Chat>
   </div>
 </template>
 ```
-
-### Default slot
-
-`Chat` accepts an optional **default slot**: content rendered when there are no chat messages. Use it for onboarding text, disclaimers, empty-state hints, or custom controls like new suggested chat prompts. If you pass no default slot, that region is omitted.
 
 ## `Chat` props
 
@@ -70,6 +77,23 @@ const getGenderClientTool = getGenderDef.client(getGender)
 | `userImage` | `string` | — | Optional avatar URL for user. |
 | `showToolUsage` | `boolean` | `true` | When `false`, tool-call / tool-result parts are hidden. |
 | `stickyPrompt` | `boolean` | `true` | Sticky prompt textarea/composer ; set `false` for a simpler stacked layout. |
+
+
+### Default slot
+
+`Chat` accepts an optional **default slot**: content rendered when there are no chat messages. Use it for onboarding text, disclaimers, empty-state hints, or custom controls like new suggested chat prompts. If you pass no default slot, that region is omitted.
+
+### Exposed methods
+
+`Chat` exposes these methods on a **template ref** (via `defineExpose`):
+
+| Method | Purpose |
+|--------|---------|
+| `sendMessage(message)` | Same as sending from the composer; appends a user message and runs the stream. |
+| `stop()` | Stops the in-flight response (same as the composer’s stop action). |
+| `reload()` | Retries the last request when the client is in an error state (same as the composer’s retry). |
+| `clear()` | TanStack `useChat().clear()` — wipes messages and related client state so you get an empty thread again (the default slot reappears when `messages` is empty). |
+
 
 ## Nitro API
 
