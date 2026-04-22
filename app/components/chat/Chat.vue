@@ -45,7 +45,14 @@ const chatOptions = createChatClientOptions({
   tools
 })
 type ChatMessages = InferChatMessages<typeof chatOptions>
-const { messages, sendMessage, status, error, stop, reload } = useChat(chatOptions)
+const { messages, sendMessage, status, error, stop, reload, clear } = useChat(chatOptions)
+
+defineExpose({
+  sendMessage,
+  stop,
+  reload,
+  clear
+})
 
 /** Show assistant label when the visible “thread” breaks (incl. prior bubble was tool-only collapsed). */
 function showAssistantNameAt(index: number) {
@@ -75,7 +82,7 @@ function onSubmit() {
       v-if="$slots.default && messages.length === 0"
       class="shrink-0 pb-2"
     >
-      <slot />
+      <slot :send-message="sendMessage"/>
     </div>
     <ChatMessageList
       :class="stickyPrompt ? 'min-h-0 flex-1' : undefined"
