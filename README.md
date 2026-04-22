@@ -6,6 +6,17 @@ This layer ships a small chat stack built on **@tanstack/ai**, and **@nuxt/ui**.
 
 Use `Chat` anywhere you want a full AI chat interface.
 
+In your `nuxt.config.ts`, configure layer usage.
+
+```ts
+export default defineNuxtConfig({
+
+  extends: [
+    ['github:awecode/nuxt-tanstack-ai', { install: true }],
+  ],
+})
+```
+
 ```vue
 <template>
     <Chat />
