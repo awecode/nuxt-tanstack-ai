@@ -45,10 +45,18 @@ const getGenderClientTool = getGenderDef.client(getGender)
       :user-image="user.profile_picture"
       :show-tool-usage="true"
       :sticky-prompt="true"
-    />
+    >
+      <p class="text-muted text-sm">
+        Optional default slot: intro, disclaimer, anything; shown when no chat messages.
+      </p>
+    </Chat>
   </div>
 </template>
 ```
+
+### Default slot
+
+`Chat` accepts an optional **default slot**: content rendered when there are no chat messages. Use it for onboarding text, disclaimers, empty-state hints, or custom controls like new suggested chat prompts. If you pass no default slot, that region is omitted.
 
 ## `Chat` props
 

@@ -71,6 +71,12 @@ function onSubmit() {
       stickyPrompt ? 'min-h-0 h-full gap-0' : 'gap-3 sm:gap-4',
     ]"
   >
+    <div
+      v-if="$slots.default && messages.length === 0"
+      class="shrink-0 pb-2"
+    >
+      <slot />
+    </div>
     <ChatMessageList
       :class="stickyPrompt ? 'min-h-0 flex-1' : undefined"
       :messages="messages as ChatMessages"
