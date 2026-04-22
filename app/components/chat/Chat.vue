@@ -104,7 +104,7 @@ function onSubmit() {
     <div
       :class="
         stickyPrompt
-          ? 'sticky bottom-0 z-10 shrink-0 border-t border-default/60 bg-default/95 pt-2 backdrop-blur-md supports-[backdrop-filter]:bg-default/80 pb-[max(0.5rem,env(safe-area-inset-bottom))]'
+          ? 'sticky bottom-0 z-10 shrink-0 bg-default/95 pt-2 backdrop-blur-md supports-[backdrop-filter]:bg-default/80 pb-[max(0.5rem,env(safe-area-inset-bottom))]'
           : undefined
       "
     >

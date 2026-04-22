@@ -49,67 +49,71 @@ function onActionClick() {
 </script>
 
 <template>
-  <UCard
-    variant="subtle"
-    class="ring ring-default"
-    :ui="{ body: 'p-2 sm:p-2' }"
-  >
+  <div class="flex flex-col gap-2">
     <UAlert
       v-if="error"
       color="error"
       variant="soft"
-      class="mb-3"
       :title="error.name"
       :description="error.message"
     />
 
-    <form
-      class="flex flex-col gap-2 sm:flex-row sm:items-end"
-      @submit.prevent="trySubmit"
-    >
+    <form @submit.prevent="trySubmit">
       <UTextarea
         v-model="model"
         :placeholder="placeholder"
         :disabled="blocked"
         :autofocus="autofocus"
         variant="outline"
+        color="neutral"
         autoresize
         :maxrows="8"
-        class="min-h-11 flex-1"
+        :rows="1"
+        class="w-full"
+        :ui="{
+          root: 'w-full',
+          base: 'min-h-10 py-1.5 ps-2.5 text-sm leading-snug'
+        }"
         @keydown="onKeydown"
-      />
-
-      <div class="flex shrink-0 justify-end gap-2">
-        <UButton
-          v-if="showStop"
-          type="button"
-          color="neutral"
-          variant="soft"
-          square
-          icon="i-lucide-square"
-          aria-label="Stop"
-          @click="onActionClick"
-        />
-        <UButton
-          v-else-if="showReload"
-          type="button"
-          color="error"
-          variant="soft"
-          square
-          icon="i-lucide-refresh-ccw"
-          aria-label="Retry"
-          @click="onActionClick"
-        />
-        <UButton
-          v-else
-          type="submit"
-          color="primary"
-          square
-          icon="i-lucide-arrow-up"
-          :disabled="!model.trim() || blocked"
-          aria-label="Send"
-        />
-      </div>
+      >
+        <template #trailing>
+          <div class="flex items-end self-end">
+            <UButton
+              v-if="showStop"
+              type="button"
+              color="neutral"
+              variant="soft"
+              size="sm"
+              square
+              icon="i-lucide-square"
+              aria-label="Stop"
+              @click="onActionClick"
+            />
+            <UButton
+              v-else-if="showReload"
+              type="button"
+              color="error"
+              variant="soft"
+              size="sm"
+              square
+              icon="i-lucide-refresh-ccw"
+              aria-label="Retry"
+              @click="onActionClick"
+            />
+            <UButton
+              v-else
+              type="submit"
+              color="neutral"
+              size="sm"
+              square
+              icon="i-lucide-arrow-right"
+              variant="soft"
+              :disabled="!model.trim() || blocked"
+              aria-label="Send"
+            />
+          </div>
+        </template>
+      </UTextarea>
     </form>
-  </UCard>
+  </div>
 </template>
