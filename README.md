@@ -10,7 +10,6 @@ In your `nuxt.config.ts`, configure layer usage.
 
 ```ts
 export default defineNuxtConfig({
-
   extends: [
     ['github:awecode/nuxt-tanstack-ai', { install: true }],
   ],
