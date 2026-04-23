@@ -39,6 +39,9 @@ const shouldShowName = computed(() => {
 })
 
 const shouldRenderBubble = computed(() => {
+  console.log('===================================')
+  console.log('shouldRenderBubble', isUser.value, props.showToolUsage, hasAssistantVisibleSurface(props.message.parts), props.message)
+  console.log('===================================')
   if (isUser.value) return true
   if (props.showToolUsage) return true
   return hasAssistantVisibleSurface(props.message.parts)

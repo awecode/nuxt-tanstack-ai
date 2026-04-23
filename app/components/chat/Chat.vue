@@ -18,6 +18,11 @@ const props = withDefaults(
     /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
     tools?: readonly AnyClientTool[]
     endpoint?: string
+    /**
+     * Seed the thread when this `Chat` instance is created (e.g. restoring history).
+     * Omitted when empty. To load a different transcript later, remount `Chat` (e.g. `:key="conversationId"`).
+     */
+    initialMessages?: readonly UIMessage[] | UIMessage[]
     assistantName?: string
     assistantImage?: string
     userName?: string
@@ -42,13 +47,17 @@ const tools = clientTools(...(props.tools ?? []))
 
 const chatOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
-  tools
+  tools,
+  ...(props.initialMessages?.length
+    ? { initialMessages: [...props.initialMessages] }
+    : {})
 })
 type ChatMessages = InferChatMessages<typeof chatOptions>
-const { messages, sendMessage, status, error, stop, reload, clear } = useChat(chatOptions)
+const { messages, sendMessage, status, error, stop, reload, clear, append } = useChat(chatOptions)
 
 defineExpose({
   sendMessage,
+  append,
   stop,
   reload,
   clear
