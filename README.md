@@ -39,6 +39,8 @@ const chatRef = useTemplateRef('chatRef')
     <Chat
       :tools="[getGenderClientTool]"
       endpoint="/api/chat"
+      :body="{ context: 'optional-extra-for-server' }"
+      placeholder="Ask something…"
       assistant-name="Assistant"
       assistant-image="https://example.com/assistant.png"
       :user-name="user.name"
@@ -70,6 +72,9 @@ const chatRef = useTemplateRef('chatRef')
 |------|------|---------|-------------|
 | `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)` |
 | `endpoint` | `string` | `'/api/chat'` | URL passed to `fetchServerSentEvents` (your Nitro route). |
+| `initialMessages` | `readonly UIMessage[] \| UIMessage[]` | — | Seed the thread on first mount. Remount with `:key` to load a different history. |
+| `body` | `Record<string, unknown>` | — | Merged into every request body TanStack sends to `endpoint` (e.g. `{ userContext: '...' }`). Read extra fields in Nitro with `readBody`. Not for `role: 'system'` via `append`—use this or your server adapter for system / side context. |
+| `placeholder` | `string` | `'Message…'` | Composer textarea placeholder. |
 | `assistantName` | `string` | `'Assistant'` | Shown on assistant bubbles. |
 | `assistantImage` | `string` | — | Optional avatar URL for assistant. |
 | `userName` | `string` | `'You'` | Shown on user bubbles. |
