@@ -23,6 +23,10 @@ const props = withDefaults(
      * Omitted when empty. To load a different transcript later, remount `Chat` (e.g. `:key="conversationId"`).
      */
     initialMessages?: readonly UIMessage[] | UIMessage[]
+    /**
+     * Merged into every chat request body (e.g. `{ userContext: '...' }`). Read in Nitro with `readBody(event)`.
+     */
+    body?: Record<string, unknown>
     assistantName?: string
     assistantImage?: string
     userName?: string
@@ -45,14 +49,21 @@ const input = ref('')
 
 const tools = clientTools(...(props.tools ?? []))
 
-const chatOptions = createChatClientOptions({
+const baseOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
   tools,
   ...(props.initialMessages?.length
     ? { initialMessages: [...props.initialMessages] }
-    : {})
+    : {}),
 })
-type ChatMessages = InferChatMessages<typeof chatOptions>
+type ChatMessages = InferChatMessages<typeof baseOptions>
+
+const chatOptions = {
+  ...baseOptions,
+  get body() {
+    return props.body
+  },
+}
 const { messages, sendMessage, status, error, stop, reload, clear, append } = useChat(chatOptions)
 
 defineExpose({
