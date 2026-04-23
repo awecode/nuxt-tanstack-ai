@@ -33,6 +33,8 @@ const props = withDefaults(
     userImage?: string
     /** When false, tool-call / tool-result parts are not shown in the transcript. */
     showToolUsage?: boolean
+    /** Placeholder for the composer `UTextarea` (same as `ChatComposer`). */
+    placeholder?: string
     /** Pin the composer to the bottom of the chat column (parent should be flex + bounded height, e.g. `min-h-0 flex-1`). */
     stickyPrompt?: boolean
   }>(),
@@ -41,6 +43,7 @@ const props = withDefaults(
     assistantName: 'Assistant',
     userName: 'You',
     showToolUsage: true,
+    placeholder: 'Ask me anything...',
     stickyPrompt: true
   }
 )
@@ -65,6 +68,11 @@ const chatOptions = {
   },
 }
 const { messages, sendMessage, status, error, stop, reload, clear, append } = useChat(chatOptions)
+
+watch(error, (err) => {
+  if (!err) return
+  console.error('[Chat] useChat error:', err)
+})
 
 defineExpose({
   sendMessage,
@@ -144,6 +152,7 @@ function onSubmit() {
       <ChatComposer
         v-model="input"
         autofocus
+        :placeholder="placeholder"
         :status="status"
         :error="error"
         @submit="onSubmit"
