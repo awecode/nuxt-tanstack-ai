@@ -186,20 +186,20 @@ onUnmounted(() => {
               <UIcon
                 v-else
                 name="i-lucide-bot"
-                class="relative size-4 text-muted motion-safe:animate-pulse"
+                class="relative size-4 text-black/45 motion-safe:animate-pulse dark:text-muted"
               />
             </div>
             <div class="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
               <span class="text-[11px] font-medium text-muted">{{ assistantName }}</span>
               <div class="flex flex-col gap-2">
                 <div
-                  class="h-2.5 max-w-md w-[88%] rounded-full bg-muted/45 motion-safe:animate-pulse"
+                  class="h-2.5 max-w-md w-[88%] rounded-full bg-black/10 motion-safe:animate-pulse dark:bg-white/10"
                 />
                 <div
-                  class="h-2.5 max-w-sm w-[62%] rounded-full bg-muted/35 motion-safe:animate-pulse motion-safe:[animation-delay:120ms]"
+                  class="h-2.5 max-w-sm w-[62%] rounded-full bg-black/10 motion-safe:animate-pulse motion-safe:[animation-delay:120ms] dark:bg-white/10"
                 />
                 <div
-                  class="h-2.5 max-w-xs w-[42%] rounded-full bg-muted/30 motion-safe:animate-pulse motion-safe:[animation-delay:240ms]"
+                  class="h-2.5 max-w-xs w-[42%] rounded-full bg-black/10 motion-safe:animate-pulse motion-safe:[animation-delay:240ms] dark:bg-white/10"
                 />
               </div>
             </div>
