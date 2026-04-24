@@ -102,7 +102,7 @@ function onSubmit() {
 <template>
   <UContainer
     :class="[
-      'flex flex-1 flex-col',
+      'flex flex-1 flex-col p-0',
       stickyPrompt ? 'min-h-0 h-full gap-0' : 'gap-3 sm:gap-4',
     ]"
   >
