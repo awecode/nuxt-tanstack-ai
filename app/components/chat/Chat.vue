@@ -79,7 +79,8 @@ defineExpose({
   append,
   stop,
   reload,
-  clear
+  clear,
+  messages
 })
 
 /** Show assistant label when the visible “thread” breaks (incl. prior bubble was tool-only collapsed). */
