@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StreamChunk } from '@tanstack/ai'
 import type { AnyClientTool, InferChatMessages, UIMessage } from '@tanstack/ai-client'
 import { clientTools, createChatClientOptions } from '@tanstack/ai-client'
 import { toValue } from 'vue'
@@ -50,6 +51,11 @@ const props = withDefaults(
   }
 )
 
+const emit = defineEmits<{
+  chunk: [chunk: StreamChunk]
+  finish: [message: UIMessage]
+}>()
+
 const input = ref('')
 
 const chatId = props.id ?? crypto.randomUUID()
@@ -60,6 +66,8 @@ const baseOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
   id: chatId,
   tools,
+  onChunk: chunk => emit('chunk', chunk),
+  onFinish: message => emit('finish', message),
   ...(props.initialMessages?.length
     ? { initialMessages: [...props.initialMessages] }
     : {}),
