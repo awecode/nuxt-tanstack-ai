@@ -37,6 +37,8 @@ const chatRef = useTemplateRef('chatRef')
 <template>
   <div class="flex min-h-0 flex-1 flex-col">
     <Chat
+      ref="chatRef"
+      id="support-chat-xyz123"
       :tools="[getGenderClientTool]"
       endpoint="/api/chat"
       :body="{ context: 'optional-extra-for-server' }"
@@ -47,6 +49,9 @@ const chatRef = useTemplateRef('chatRef')
       :user-image="user.profile_picture"
       :show-tool-usage="true"
       :sticky-prompt="true"
+      @send="onSend"
+      @chunk="onChunk"
+      @finish="onFinish"
     >
       <div class="flex flex-col gap-3 text-center text-muted text-sm">
         Pick a starter or type and send a message.
@@ -71,6 +76,7 @@ const chatRef = useTemplateRef('chatRef')
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)` |
+| `id` | `string` | generated UUID | Chat thread id passed to TanStack `useChat`. When omitted, `Chat` creates one with `crypto.randomUUID()`. |
 | `endpoint` | `string` | `'/api/chat'` | URL passed to `fetchServerSentEvents` (your Nitro route). |
 | `initialMessages` | `readonly UIMessage[] \| UIMessage[]` | — | Seed the thread on first mount. Remount with `:key` to load a different history. |
 | `body` | `Record<string, unknown>` | — | Merged into every request body TanStack sends to `endpoint` (e.g. `{ userContext: '...' }`). Read extra fields in Nitro with `readBody`. Not for `role: 'system'` via `append`—use this or your server adapter for system / side context. |
@@ -87,16 +93,29 @@ const chatRef = useTemplateRef('chatRef')
 
 `Chat` accepts an optional **default slot**: content rendered when there are no chat messages. Use it for onboarding text, disclaimers, empty-state hints, or custom controls like new suggested chat prompts. If you pass no default slot, that region is omitted.
 
-### Exposed methods
+### Exposed references
 
-`Chat` exposes these methods on a **template ref** (via `defineExpose`):
+`Chat` exposes these methods and refs on a **template ref** (via `defineExpose`):
 
-| Method | Purpose |
-|--------|---------|
+| Exposed value | Purpose |
+|---------------|---------|
 | `sendMessage(message)` | Same as sending from the composer; appends a user message and runs the stream. |
+| `append(message)` | TanStack `useChat().append()` — appends a message and runs the stream. |
 | `stop()` | Stops the in-flight response (same as the composer’s stop action). |
 | `reload()` | Retries the last request when the client is in an error state (same as the composer’s retry). |
 | `clear()` | TanStack `useChat().clear()` — wipes messages and related client state so you get an empty thread again (the default slot reappears when `messages` is empty). |
+| `chatId` | The active chat id: the passed `id` prop, or the generated UUID fallback. |
+| `messages` | The TanStack `useChat().messages` ref for the current transcript. |
+
+### Emitted events
+
+`Chat` emits these events for parent components:
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `send` | `UIMessage` | Fired when the composer submits a user message. |
+| `chunk` | `StreamChunk` | Fired for each stream chunk received from TanStack `onChunk`. |
+| `finish` | `UIMessage` | Fired when TanStack `onFinish` completes with the assistant message. |
 
 
 ## Nitro API
