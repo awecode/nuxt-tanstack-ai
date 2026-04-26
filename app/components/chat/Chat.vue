@@ -54,6 +54,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   chunk: [chunk: StreamChunk]
   finish: [message: UIMessage]
+  send: [message: UIMessage]
 }>()
 
 const input = ref('')
@@ -110,6 +111,7 @@ function showAssistantNameAt(index: number) {
 function onSubmit() {
   if (!input.value.trim()) return
   void sendMessage(input.value)
+  emit('send', { id: '', role: 'user', parts: [{ type: 'text', content: input.value }], createdAt: new Date() })
   input.value = ''
 }
 </script>
