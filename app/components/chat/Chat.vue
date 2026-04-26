@@ -17,6 +17,8 @@ const props = withDefaults(
   defineProps<{
     /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
     tools?: readonly AnyClientTool[]
+    /** Chat thread id. A UUID is generated when omitted. */
+    id?: string
     endpoint?: string
     /**
      * Seed the thread when this `Chat` instance is created (e.g. restoring history).
@@ -50,10 +52,13 @@ const props = withDefaults(
 
 const input = ref('')
 
+const chatId = props.id ?? crypto.randomUUID()
+
 const tools = clientTools(...(props.tools ?? []))
 
 const baseOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
+  id: chatId,
   tools,
   ...(props.initialMessages?.length
     ? { initialMessages: [...props.initialMessages] }
@@ -80,6 +85,7 @@ defineExpose({
   stop,
   reload,
   clear,
+  chatId,
   messages
 })
 
