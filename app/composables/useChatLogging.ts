@@ -31,6 +31,7 @@ function findMessageById(messages: ChatMessagesSource, messageId: string) {
 function hasDuplicateToolResultPart(message: UIMessage) {
   const [toolCallPart, toolResultPart] = message.parts
   if (!toolCallPart || !toolResultPart) return false
+
   return (
     message.parts.length === 2
     && toolCallPart.type === 'tool-call'
@@ -39,14 +40,46 @@ function hasDuplicateToolResultPart(message: UIMessage) {
   )
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function partForLogging(part: MessagePart): MessagePart {
+  if (part.type !== 'tool-call' && part.type !== 'tool-result') return part
+
+  const providerMetadata = (part as { providerMetadata?: unknown }).providerMetadata
+  if (!isRecord(providerMetadata) || !Object.prototype.hasOwnProperty.call(providerMetadata, 'thoughtSignature')) {
+    return part
+  }
+
+  const sanitizedProviderMetadata = { ...providerMetadata }
+  delete sanitizedProviderMetadata.thoughtSignature
+
+  const sanitizedPart = { ...part } as Record<string, unknown>
+  if (Object.keys(sanitizedProviderMetadata).length > 0) {
+    sanitizedPart.providerMetadata = sanitizedProviderMetadata
+  } else {
+    delete sanitizedPart.providerMetadata
+  }
+
+  return sanitizedPart as MessagePart
+}
+
+function sanitizeMessageForLogging(message: UIMessage): UIMessage {
+  return {
+    ...message,
+    parts: message.parts.map(partForLogging),
+  }
+}
+
 function messageForLogging(message: UIMessage): UIMessage {
-  if (!hasDuplicateToolResultPart(message)) return message
+  if (!hasDuplicateToolResultPart(message)) return sanitizeMessageForLogging(message)
 
   const [toolCallPart] = message.parts
   if (!toolCallPart) return message
   return {
     ...message,
-    parts: [toolCallPart],
+    parts: [partForLogging(toolCallPart)],
   }
 }
 
@@ -82,7 +115,7 @@ export function useChatLogging(options: UseChatLoggingOptions) {
       ? await waitForToolOutput(message)
       : messageForLogging(message)
 
-    return [...queuedSentMessages.value, messageToLog]
+    return [...queuedSentMessages.value.map(messageForLogging), messageToLog]
   }
 
   async function onMessageFinish(message: UIMessage) {
