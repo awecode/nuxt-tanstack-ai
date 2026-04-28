@@ -140,9 +140,6 @@ const { onMessageSend, onMessageFinish } = useChatLogging({
       body: {
         chatId,
         messages,
-        userId: $auth.user?.email || 'anonymous',
-        context: userContext.value,
-        reference: 'ref',
       },
     })
   },
