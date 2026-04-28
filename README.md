@@ -52,6 +52,7 @@ const chatRef = useTemplateRef('chatRef')
       @send="onSend"
       @chunk="onChunk"
       @finish="onFinish"
+      @tool-call-output="onToolCallOutput"
     >
       <div class="flex flex-col gap-3 text-center text-muted text-sm">
         Pick a starter or type and send a message.
@@ -116,6 +117,47 @@ const chatRef = useTemplateRef('chatRef')
 | `send` | `UIMessage` | Fired when the composer submits a user message. |
 | `chunk` | `StreamChunk` | Fired for each stream chunk received from TanStack `onChunk`. |
 | `finish` | `UIMessage` | Fired when TanStack `onFinish` completes with the assistant message. |
+| `tool-call-output` | `ToolCallPart, UIMessage` | Fired once when a tool-call part receives an `output` property. The full tool-call part is emitted. |
+
+### Chat logging composable
+
+Use `useChatLogging` when you want to log the submitted user message plus the final assistant message.
+
+```vue
+<script setup lang="ts">
+const chatRef = useTemplateRef('chatRef')
+
+const userContext = computed(() => {
+  return initialData.value
+})
+
+const { onMessageSend, onMessageFinish } = useChatLogging({
+  messages: () => chatRef.value?.messages,
+  chatId: () => chatRef.value?.chatId,
+  onLog: async ({ chatId, messages }) => {
+    await $fetch('/api/chat-log/', {
+      method: 'POST',
+      body: {
+        chatId,
+        messages,
+        userId: $auth.user?.email || 'anonymous',
+        context: userContext.value,
+        reference: 'ref',
+      },
+    })
+  },
+})
+
+</script>
+
+<template>
+  <Chat
+    ref="chatRef"
+    @send="onMessageSend"
+    @finish="onMessageFinish"
+  />
+</template>
+```
 
 
 ## Nitro API
