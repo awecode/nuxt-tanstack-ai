@@ -30,7 +30,7 @@ function findMessageById(messages: ChatMessagesSource, messageId: string) {
 
 function hasDuplicateToolResultPart(message: UIMessage) {
   const [toolCallPart, toolResultPart] = message.parts
-
+  if (!toolCallPart || !toolResultPart) return false
   return (
     message.parts.length === 2
     && toolCallPart.type === 'tool-call'
@@ -43,6 +43,7 @@ function messageForLogging(message: UIMessage): UIMessage {
   if (!hasDuplicateToolResultPart(message)) return message
 
   const [toolCallPart] = message.parts
+  if (!toolCallPart) return message
   return {
     ...message,
     parts: [toolCallPart],
