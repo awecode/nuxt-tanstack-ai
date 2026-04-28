@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { StreamChunk } from '@tanstack/ai'
-import type { AnyClientTool, InferChatMessages, UIMessage } from '@tanstack/ai-client'
+import type { AnyClientTool, InferChatMessages, ToolCallPart, UIMessage } from '@tanstack/ai-client'
 import { clientTools, createChatClientOptions } from '@tanstack/ai-client'
 import { toValue } from 'vue'
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-vue'
@@ -55,6 +55,7 @@ const emit = defineEmits<{
   chunk: [chunk: StreamChunk]
   finish: [message: UIMessage]
   send: [message: UIMessage]
+  'tool-call-output': [part: ToolCallPart, message: UIMessage]
 }>()
 
 const input = ref('')
@@ -82,11 +83,40 @@ const chatOptions = {
   },
 }
 const { messages, sendMessage, status, error, stop, reload, clear, append } = useChat(chatOptions)
+const emittedToolOutputKeys = new Set<string>()
 
 watch(error, (err) => {
   if (!err) return
   console.error('[Chat] useChat error:', err)
 })
+
+function hasToolOutput(part: UIMessage['parts'][number]): part is ToolCallPart & { output: unknown } {
+  return Object.prototype.hasOwnProperty.call(part, 'output')
+}
+
+function getToolOutputKey(message: Pick<UIMessage, 'id'>, part: ToolCallPart, partIndex: number) {
+  const record = part as Record<string, unknown>
+  const toolCallId = record.id ?? record.toolCallId ?? part.name ?? partIndex
+  return `${message.id}:${String(toolCallId)}:${partIndex}`
+}
+
+watch(
+  messages,
+  (messages) => {
+    for (const message of messages) {
+      for (const [partIndex, part] of message.parts.entries()) {
+        if (part.type !== 'tool-call' || !hasToolOutput(part)) continue
+
+        const key = getToolOutputKey(message, part, partIndex)
+        if (emittedToolOutputKeys.has(key)) continue
+
+        emittedToolOutputKeys.add(key)
+        emit('tool-call-output', part, message as unknown as UIMessage)
+      }
+    }
+  },
+  { deep: true }
+)
 
 defineExpose({
   sendMessage,
