@@ -18,7 +18,7 @@ const props = withDefaults(
   defineProps<{
     /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
     tools?: readonly AnyClientTool[]
-    /** Chat thread id. A UUID is generated when omitted. */
+    /** Chat thread id, passed to TanStack as `threadId`. A UUID is generated when omitted. */
     id?: string
     endpoint?: string
     /**
@@ -27,7 +27,8 @@ const props = withDefaults(
      */
     initialMessages?: readonly UIMessage[] | UIMessage[]
     /**
-     * Merged into every chat request body (e.g. `{ userContext: '...' }`). Read in Nitro with `readBody(event)`.
+     * Extra JSON forwarded on every request as TanStack `forwardedProps`
+     * (AG-UI `RunAgentInput.forwardedProps`). Read via `chatParamsFromRequestBody`.
      */
     body?: Record<string, unknown>
     assistantName?: string
@@ -66,7 +67,7 @@ const tools = clientTools(...(props.tools ?? []))
 
 const baseOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
-  id: chatId,
+  threadId: chatId,
   tools,
   onChunk: chunk => emit('chunk', chunk),
   onFinish: message => emit('finish', message),
@@ -78,7 +79,7 @@ type ChatMessages = InferChatMessages<typeof baseOptions>
 
 const chatOptions = {
   ...baseOptions,
-  get body() {
+  get forwardedProps() {
     return props.body
   },
 }

@@ -77,10 +77,10 @@ const chatRef = useTemplateRef('chatRef')
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)` |
-| `id` | `string` | generated UUID | Chat thread id passed to TanStack `useChat`. When omitted, `Chat` creates one with `crypto.randomUUID()`. |
+| `id` | `string` | generated UUID | Chat thread id passed to TanStack as `threadId`. When omitted, `Chat` creates one with `crypto.randomUUID()`. |
 | `endpoint` | `string` | `'/api/chat'` | URL passed to `fetchServerSentEvents` (your Nitro route). |
 | `initialMessages` | `readonly UIMessage[] \| UIMessage[]` | — | Seed the thread on first mount. Remount with `:key` to load a different history. |
-| `body` | `Record<string, unknown>` | — | Merged into every request body TanStack sends to `endpoint` (e.g. `{ userContext: '...' }`). Read extra fields in Nitro with `readBody`. Not for `role: 'system'` via `append`—use this or your server adapter for system / side context. |
+| `body` | `Record<string, unknown>` | — | Merged into every request as TanStack `forwardedProps` (AG-UI `RunAgentInput.forwardedProps`). Read on the server via `chatParamsFromRequestBody` / `forwardedProps`. Not for `role: 'system'` via `append`, use this or your server adapter for system / side context. |
 | `placeholder` | `string` | `'Message…'` | Composer textarea placeholder. |
 | `assistantName` | `string` | `'Assistant'` | Shown on assistant bubbles. |
 | `assistantImage` | `string` | — | Optional avatar URL for assistant. |
@@ -168,7 +168,7 @@ That exposes **`POST /api/chat`** to the client (matching the default `endpoint`
 Adapt adapter, model name, env vars, and imports to your project. Tool imports below are placeholders; replace with your own `toolDefinition` exports. Refer to [Tanstack AI documentation](https://tanstack.com/ai/latest/docs/getting-started/overview) to learn more about adapters, tools, and advanced usage.
 
 ```ts
-import { chat, toServerSentEventsResponse } from '@tanstack/ai'
+import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
 import { createGeminiChat } from '@tanstack/ai-gemini'
 import { getGenderDef } from '~~/app/utils/tools/gender'
 // import { getGenderServer } from '~~/server/tools/gender'
@@ -187,11 +187,13 @@ export default defineEventHandler(async (event) => {
   const adapter = createGeminiChat('gemini-3.1-flash-lite-preview', apiKey, config)
 
   try {
-    const { messages, conversationId } = await readBody(event)
+    const body = await readBody(event)
+    const { messages, threadId, runId } = await chatParamsFromRequestBody(body)
     const stream = chat({
       adapter,
       messages,
-      conversationId,
+      threadId,
+      runId,
       systemPrompts: ["You are a helpful assistant"],
       tools: [getGenderDef], // for client tools
       // tools: [getGenderServer] // for server tools

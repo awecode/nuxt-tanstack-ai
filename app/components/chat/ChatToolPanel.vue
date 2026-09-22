@@ -22,13 +22,18 @@ const subtitle = computed(() => {
   return (props.part as ToolResultPart).state
 })
 
+function formatToolResultContent(content: ToolResultPart['content']) {
+  return typeof content === 'string' ? content : JSON.stringify(content, null, 2)
+}
+
 const body = computed(() => {
   if (isCall.value) {
     const p = props.part as ToolCallPart
     return p.arguments
   }
   const p = props.part as ToolResultPart
-  return p.error ? `${p.content}\n\n${p.error}` : p.content
+  const content = formatToolResultContent(p.content)
+  return p.error ? `${content}\n\n${p.error}` : content
 })
 </script>
 

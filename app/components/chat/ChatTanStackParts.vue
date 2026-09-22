@@ -81,7 +81,7 @@ function formatUnknown(part: MessagePart) {
           class="max-h-64 w-full object-contain bg-elevated"
         >
         <img
-          v-else
+          v-else-if="part.source.type === 'data'"
           :src="`data:${part.source.mimeType};base64,${part.source.value}`"
           alt="Inline image"
           class="max-h-64 w-full object-contain bg-elevated"
