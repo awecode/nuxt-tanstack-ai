@@ -38,10 +38,10 @@ const chatRef = useTemplateRef('chatRef')
   <div class="flex min-h-0 flex-1 flex-col">
     <Chat
       ref="chatRef"
-      id="support-chat-xyz123"
+      thread-id="support-chat-xyz123"
       :tools="[getGenderClientTool]"
       endpoint="/api/chat"
-      :body="{ context: 'optional-extra-for-server' }"
+      :forwarded-props="{ context: 'optional-extra-for-server' }"
       placeholder="Ask something…"
       assistant-name="Assistant"
       assistant-image="https://example.com/assistant.png"
@@ -77,10 +77,10 @@ const chatRef = useTemplateRef('chatRef')
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tools` | `readonly AnyClientTool[]` | `[]` | Client tool instances from `toolDefinition(...).client(...)` |
-| `id` | `string` | generated UUID | Chat thread id passed to TanStack as `threadId`. When omitted, `Chat` creates one with `crypto.randomUUID()`. |
+| `threadId` | `string` | generated UUID | AG-UI / TanStack thread id. When omitted, `Chat` creates one with `crypto.randomUUID()`. |
 | `endpoint` | `string` | `'/api/chat'` | URL passed to `fetchServerSentEvents` (your Nitro route). |
 | `initialMessages` | `readonly UIMessage[] \| UIMessage[]` | — | Seed the thread on first mount. Remount with `:key` to load a different history. |
-| `body` | `Record<string, unknown>` | — | Merged into every request as TanStack `forwardedProps` (AG-UI `RunAgentInput.forwardedProps`). Read on the server via `chatParamsFromRequestBody` / `forwardedProps`. Not for `role: 'system'` via `append`, use this or your server adapter for system / side context. |
+| `forwardedProps` | `Record<string, unknown>` | — | Extra JSON on every request as AG-UI `RunAgentInput.forwardedProps`. Read on the server via `chatParamsFromRequestBody` → `forwardedProps`. Not for `role: 'system'` via `append`, use this or your server adapter for system / side context. |
 | `placeholder` | `string` | `'Message…'` | Composer textarea placeholder. |
 | `assistantName` | `string` | `'Assistant'` | Shown on assistant bubbles. |
 | `assistantImage` | `string` | — | Optional avatar URL for assistant. |
@@ -105,7 +105,7 @@ const chatRef = useTemplateRef('chatRef')
 | `stop()` | Stops the in-flight response (same as the composer’s stop action). |
 | `reload()` | Retries the last request when the client is in an error state (same as the composer’s retry). |
 | `clear()` | TanStack `useChat().clear()` — wipes messages and related client state so you get an empty thread again (the default slot reappears when `messages` is empty). |
-| `chatId` | The active chat id: the passed `id` prop, or the generated UUID fallback. |
+| `threadId` | The active thread id: the passed `threadId` prop, or the generated UUID fallback. |
 | `messages` | The TanStack `useChat().messages` ref for the current transcript. |
 
 ### Emitted events
@@ -133,12 +133,12 @@ const userContext = computed(() => {
 
 const { onMessageSend, onMessageFinish } = useChatLogging({
   messages: () => chatRef.value?.messages,
-  chatId: () => chatRef.value?.chatId,
-  onLog: async ({ chatId, messages }) => {
+  threadId: () => chatRef.value?.threadId,
+  onLog: async ({ threadId, messages }) => {
     await $fetch('/api/chat-log/', {
       method: 'POST',
       body: {
-        chatId,
+        threadId,
         messages,
       },
     })

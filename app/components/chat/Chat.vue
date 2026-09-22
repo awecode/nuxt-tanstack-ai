@@ -18,19 +18,19 @@ const props = withDefaults(
   defineProps<{
     /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
     tools?: readonly AnyClientTool[]
-    /** Chat thread id, passed to TanStack as `threadId`. A UUID is generated when omitted. */
-    id?: string
+    /** AG-UI / TanStack thread id. A UUID is generated when omitted. */
+    threadId?: string
     endpoint?: string
     /**
      * Seed the thread when this `Chat` instance is created (e.g. restoring history).
-     * Omitted when empty. To load a different transcript later, remount `Chat` (e.g. `:key="conversationId"`).
+     * Omitted when empty. To load a different transcript later, remount `Chat` (e.g. `:key="threadId"`).
      */
     initialMessages?: readonly UIMessage[] | UIMessage[]
     /**
-     * Extra JSON forwarded on every request as TanStack `forwardedProps`
-     * (AG-UI `RunAgentInput.forwardedProps`). Read via `chatParamsFromRequestBody`.
+     * Extra JSON on every request as AG-UI `RunAgentInput.forwardedProps`.
+     * Read on the server via `chatParamsFromRequestBody` → `forwardedProps`.
      */
-    body?: Record<string, unknown>
+    forwardedProps?: Record<string, unknown>
     assistantName?: string
     assistantImage?: string
     userName?: string
@@ -61,13 +61,13 @@ const emit = defineEmits<{
 
 const input = ref('')
 
-const chatId = props.id ?? crypto.randomUUID()
+const threadId = props.threadId ?? crypto.randomUUID()
 
 const tools = clientTools(...(props.tools ?? []))
 
 const baseOptions = createChatClientOptions({
   connection: fetchServerSentEvents(props.endpoint),
-  threadId: chatId,
+  threadId,
   tools,
   onChunk: chunk => emit('chunk', chunk),
   onFinish: message => emit('finish', message),
@@ -80,7 +80,7 @@ type ChatMessages = InferChatMessages<typeof baseOptions>
 const chatOptions = {
   ...baseOptions,
   get forwardedProps() {
-    return props.body
+    return props.forwardedProps
   },
 }
 const { messages, sendMessage, status, error, stop, reload, clear, append } = useChat(chatOptions)
@@ -125,7 +125,7 @@ defineExpose({
   stop,
   reload,
   clear,
-  chatId,
+  threadId,
   messages
 })
 

@@ -6,13 +6,13 @@ type MaybePromise<T> = T | Promise<T>
 type ChatMessagesSource = MaybeRefOrGetter<readonly UIMessage[] | UIMessage[] | null | undefined>
 
 export interface ChatLoggingPayload {
-  chatId?: string
+  threadId?: string
   messages: UIMessage[]
 }
 
 export interface UseChatLoggingOptions {
   messages: ChatMessagesSource
-  chatId?: MaybeRefOrGetter<string | undefined>
+  threadId?: MaybeRefOrGetter<string | undefined>
   onLog?: (payload: ChatLoggingPayload) => MaybePromise<void>
 }
 
@@ -167,7 +167,7 @@ export function useChatLogging(options: UseChatLoggingOptions) {
     const messages = await collectMessagesToLog(message)
 
     await options.onLog?.({
-      chatId: toValue(options.chatId),
+      threadId: toValue(options.threadId),
       messages,
     })
 
