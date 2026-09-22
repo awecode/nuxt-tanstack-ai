@@ -18,7 +18,7 @@ const props = withDefaults(
   defineProps<{
     /** Client tool instances from `toolDefinition(...).client(...)`, passed as an array and wrapped with `clientTools` internally. */
     tools?: readonly AnyClientTool[]
-    /** AG-UI / TanStack thread id. A UUID is generated when omitted. */
+    /** Thread id for this chat. A UUID is generated when omitted. */
     threadId?: string
     endpoint?: string
     /**
@@ -27,8 +27,8 @@ const props = withDefaults(
      */
     initialMessages?: readonly UIMessage[] | UIMessage[]
     /**
-     * Extra JSON on every request as AG-UI `RunAgentInput.forwardedProps`.
-     * Read on the server via `chatParamsFromRequestBody` → `forwardedProps`.
+     * Extra JSON sent with every chat request (`forwardedProps` on the wire).
+     * Available on the server from `chatParamsFromRequestBody`.
      */
     forwardedProps?: Record<string, unknown>
     assistantName?: string
@@ -129,7 +129,7 @@ defineExpose({
   messages
 })
 
-/** Show assistant label when the visible “thread” breaks (incl. prior bubble was tool-only collapsed). */
+/** Show assistant label when the visible thread breaks (including when the prior bubble had only hidden tool parts). */
 function showAssistantNameAt(index: number) {
   if (index === 0) return true
   const list = toValue(messages) as ChatMessages
