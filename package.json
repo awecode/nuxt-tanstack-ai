@@ -1,7 +1,7 @@
 {
   "name": "nuxt-tanstack-ai",
   "type": "module",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "MIT",
   "homepage": "https://github.com/awecode/nuxt-tanstack-ai#readme",
   "imports": {
