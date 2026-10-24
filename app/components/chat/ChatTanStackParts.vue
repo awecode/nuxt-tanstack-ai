@@ -37,8 +37,8 @@ function formatUnknown(part: MessagePart) {
         v-if="part.type === 'thinking'"
         :streaming="isLivePart(index)"
       >
-        <Comark
-          :markdown="part.content"
+        <Markdown
+          :value="part.content"
           :streaming="isLivePart(index)"
           :plugins="[highlight()]"
           class="*:first:mt-0 *:last:mb-0"
@@ -51,9 +51,9 @@ function formatUnknown(part: MessagePart) {
       />
 
       <template v-else-if="part.type === 'text'">
-        <Comark
+        <Markdown
           v-if="message.role === 'assistant'"
-          :markdown="part.content"
+          :value="part.content"
           :streaming="isLivePart(index)"
           :plugins="[highlight()]"
           class="*:first:mt-0 *:last:mb-0"

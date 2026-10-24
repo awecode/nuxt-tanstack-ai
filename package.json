@@ -16,13 +16,13 @@
     "@nuxt/ui": "^4.5.1"
   },
   "dependencies": {
-    "@comark/nuxt": "^0.2.1",
+    "@comark/nuxt": "^0.8.1",
     "@tanstack/ai": "1.0.0",
     "@tanstack/ai-client": "1.0.0",
     "@tanstack/ai-gemini": "1.0.0",
     "@tanstack/ai-vue": "1.0.0",
-    "markdown-it": "^14.1.1",
-    "shiki": "^4.0.2",
-    "zod": "^4.3.6"
+    "markdown-it": "^15.0.3",
+    "shiki": "^4.5.0",
+    "zod": "^4.6.7"
   }
 }
