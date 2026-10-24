@@ -169,51 +169,43 @@ Adapt adapter, model name, env vars, and imports to your project. Tool imports b
 
 ```ts
 import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
-import { createGeminiChat } from '@tanstack/ai-gemini'
 import { getGenderDef } from '~~/app/utils/tools/gender'
 // import { getGenderServer } from '~~/server/tools/gender'
 
 export default defineEventHandler(async (event) => {
-  const config = {
-    vertexai: true,
-  }
-  const apiKey = process.env.NUXT_AI_VERTEX_API_KEY
-  if (!apiKey) {
-    throw createError({
-      statusCode: 500,
-      message: 'NUXT_AI_VERTEX_API_KEY not configured',
-    })
-  }
-  const adapter = createGeminiChat('gemini-3.1-flash-lite-preview', apiKey, config)
-
-  try {
-    const body = await readBody(event)
-    const { messages, threadId, runId } = await chatParamsFromRequestBody(body)
-    const stream = chat({
-      adapter,
-      messages,
-      threadId,
-      runId,
-      systemPrompts: ["You are a helpful assistant"],
-      tools: [getGenderDef], // for client tools
-      // tools: [getGenderServer] // for server tools
-    })
-
-    setResponseHeaders(event, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-    })
-
-    return toServerSentEventsResponse(stream)
-  } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: error instanceof Error ? error.message : 'An error occurred',
-    })
-  }
+  const body = await readBody(event)
+  const { messages, threadId, runId } = await chatParamsFromRequestBody(body)
+  const stream = chat({
+    adapter: createVertexGatewayChat('gemini-3.1-flash-lite'),
+    messages,
+    threadId,
+    runId,
+    systemPrompts: ['You are a helpful assistant'],
+    tools: [getGenderDef], // for client tools
+    // tools: [getGenderServer] // for server tools
+  })
+  return toServerSentEventsResponse(stream)
 })
 ```
+
+### Gemini on Vertex AI through AI Gateway
+
+`createVertexGatewayChat(model, options?)` is auto-imported on the server. It returns the `@tanstack/ai-gemini` chat adapter, pointed at Vertex AI through Cloudflare AI Gateway. Store the Google service account in the gateway (Provider Keys); the app sends no Google credential. It works on Workers and in `nuxt dev`.
+
+Set these environment variables:
+
+| Variable | Value |
+|----------|-------|
+| `NUXT_CLOUDFLARE_ACCOUNT_ID` | Cloudflare account id |
+| `NUXT_CLOUDFLARE_TOKEN` | Cloudflare API token with AI Gateway access |
+| `NUXT_AI_GATEWAY_ID` | Gateway id |
+| `NUXT_AI_VERTEX_PROJECT_ID` | Google Cloud project id |
+| `NUXT_AI_VERTEX_LOCATION` | Optional, defaults to `global` |
+
+Pass extra gateway headers in `options.headers`, for example `createVertexGatewayChat(model, { headers: { 'cf-aig-skip-cache': 'true' } })`.
+
+Without the gateway, use Vertex express mode with an API key instead: `createGeminiChat(model, apiKey, { vertexai: true })` from `@tanstack/ai-gemini`.
+
 ### Client vs server tools
 
 - **Client tools**: Pass client tools to `Chat` component and have their tool definition registered in the server API endpoint as well.
